@@ -57,91 +57,37 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
   </footer>
 
   <script>
-    function fetchShigaWeather() {
-      var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
-      
-      fetch(weatherUrl)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          var current = data.current;
-          var daily = data.daily;
-          var weatherContainer = document.getElementById("weather-content");
-          
-          if (!current || !daily) {
-            weatherContainer.innerHTML = '<p class="col-span-full text-xs text-rose-400">無法解析氣象數據</p>';
-            return;
-          }
+    document.addEventListener("DOMContentLoaded", function() {
+      // 採用獨立非阻塞非同步機制，確保行程載入與氣象模組互不干擾
+      loadItinerary();
+      fetchShigaWeather();
+    });
 
-          var currentTemp = current.temperature_2m;
-          var currentSnow = current.snowfall || 0;
-          var currentWind = current.wind_speed_10m;
+    async function loadItinerary() {
+      var titleEl = document.getElementById("trip-title");
+      var flightEl = document.getElementById("flight-info");
+      var container = document.getElementById("itinerary-container");
 
-          var html = '' +
-            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-              '<span class="text-xs text-slate-400 mb-1">即時氣溫</span>' +
-              '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
-            '</div>' +
-            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-              '<span class="text-xs text-slate-400 mb-1">當前降雪量</span>' +
-              '<span class="text-xl md:text-2xl font-black text-cyan-300 font-mono">' + currentSnow + ' <span class="text-xs">cm/h</span></span>' +
-            '</div>' +
-            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-              '<span class="text-xs text-slate-400 mb-1">山區陣風風速</span>' +
-              '<span class="text-xl md:text-2xl font-black text-indigo-300 font-mono">' + currentWind + ' <span class="text-xs">km/h</span></span>' +
-            '</div>' +
-            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-              '<span class="text-xs text-slate-400 mb-1">預測累積降雪(今日)</span>' +
-              '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + (daily.snowfall_sum[0] || 0) + ' <span class="text-xs">cm</span></span>' +
-            '</div>';
+      try {
+        var res = await fetch("itinerary.json?t=" + Date.now());
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        var data = await res.json();
 
-          html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
-          for (var i = 1; i <= 3; i++) {
-            if (daily.time[i]) {
-              var dateStr = daily.time[i].substring(5);
-              var maxT = daily.temperature_2m_max[i];
-              var minT = daily.temperature_2m_min[i];
-              var snowSum = daily.snowfall_sum[i] || 0;
-              html += '<div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">' +
-                '<div class="text-slate-400 font-mono mb-0.5">' + dateStr + '</div>' +
-                '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
-                '<div class="text-sky-300 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>降雪 ' + snowSum + ' cm</div>' +
-              '</div>';
-            }
-          }
-          html += '</div>';
-
-          weatherContainer.innerHTML = html;
-        })
-        .catch(function(err) {
-          console.error("氣象資料載入失敗:", err);
-          document.getElementById("weather-content").innerHTML = 
-            '<p class="col-span-full text-xs text-slate-500 py-2">氣象數據連線逾時，請刷新頁面重試。</p>';
-        });
-    }
-
-    fetchShigaWeather();
-
-    fetch("itinerary.json?t=" + Date.now())
-      .then(function(res) {
-        if (!res.ok) { throw new Error("HTTP " + res.status); }
-        return res.json();
-      })
-      .then(function(data) {
-        document.getElementById("trip-title").innerText = data.trip_title || "2026 日本滑雪行程";
-        if (data.flights) {
-          document.getElementById("flight-info").innerHTML = 
+        if (titleEl) titleEl.innerText = data.trip_title || "2026 日本滑雪行程";
+        if (flightEl && data.flights) {
+          flightEl.innerHTML = 
             '<i class="fa-solid fa-plane-arrival text-emerald-400 mr-1"></i>去程：' + (data.flights.arrival || "") + 
             ' &nbsp;|&nbsp; <i class="fa-solid fa-plane-departure text-rose-400 mr-1"></i>回程：' + (data.flights.departure || "");
         }
 
-        var container = document.getElementById("itinerary-container");
+        if (!container) return;
         container.innerHTML = "";
 
-        data.days.forEach(function(day) {
+        (data.days || []).forEach(function(day) {
           var card = document.createElement("div");
           card.className = "bg-slate-900/90 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
 
-          // 1. 雪場與雪道圖直連顯示模組（附帶自動備用防破圖機制）
+          // 1. 雪場與雪道圖直連顯示模組
           var skiHtml = "";
           if (day.ski_resort) {
             var fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg";
@@ -193,7 +139,7 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
             '</div>';
           }
 
-          // 4. 多樣化美食與美食地圖模組 (包含地點標示與 Google Maps 連結)
+          // 4. 多樣化美食與美食地圖模組
           var recHtml = "";
           if (day.recommendations) {
             var buildList = function(items, hoverColor) {
@@ -272,24 +218,95 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 
           container.appendChild(card);
         });
-      })
-      .catch(function(err) {
-        console.error("載入失敗:", err);
-        document.getElementById("trip-title").innerText = "無法載入行程資料，請確認 itinerary.json 是否存在。";
-      });
+      } catch (err) {
+        console.error("載入行程失敗:", err);
+        if (titleEl) titleEl.innerText = "無法載入行程資料，請確認 itinerary.json 是否存在。";
+      }
+    }
+
+    async function fetchShigaWeather() {
+      var weatherContainer = document.getElementById("weather-content");
+      var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
+      
+      // 設定 6 秒 Timeout 機制防止氣象 API 卡死整個頁面
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 6000);
+
+      try {
+        var res = await fetch(weatherUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        var data = await res.json();
+        
+        var current = data.current;
+        var daily = data.daily;
+        if (!current || !daily) {
+          if (weatherContainer) weatherContainer.innerHTML = '<p class="col-span-full text-xs text-rose-400">無法解析氣象數據</p>';
+          return;
+        }
+
+        var currentTemp = current.temperature_2m;
+        var currentSnow = current.snowfall || 0;
+        var currentWind = current.wind_speed_10m;
+
+        var html = '' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1">即時氣溫</span>' +
+            '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
+          '</div>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1">當前降雪量</span>' +
+            '<span class="text-xl md:text-2xl font-black text-cyan-300 font-mono">' + currentSnow + ' <span class="text-xs">cm/h</span></span>' +
+          '</div>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1">山區陣風風速</span>' +
+            '<span class="text-xl md:text-2xl font-black text-indigo-300 font-mono">' + currentWind + ' <span class="text-xs">km/h</span></span>' +
+          '</div>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1">預測累積降雪(今日)</span>' +
+            '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + ((daily.snowfall_sum && daily.snowfall_sum[0]) || 0) + ' <span class="text-xs">cm</span></span>' +
+          '</div>';
+
+        html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
+        for (var i = 1; i <= 3; i++) {
+          if (daily.time && daily.time[i]) {
+            var dateStr = daily.time[i].substring(5);
+            var maxT = daily.temperature_2m_max[i];
+            var minT = daily.temperature_2m_min[i];
+            var snowSum = (daily.snowfall_sum && daily.snowfall_sum[i]) || 0;
+            html += '<div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">' +
+              '<div class="text-slate-400 font-mono mb-0.5">' + dateStr + '</div>' +
+              '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
+              '<div class="text-sky-300 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>降雪 ' + snowSum + ' cm</div>' +
+            '</div>';
+          }
+        }
+        html += '</div>';
+
+        if (weatherContainer) weatherContainer.innerHTML = html;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error("氣象資料載入失敗:", err);
+        if (weatherContainer) {
+          weatherContainer.innerHTML = 
+            '<p class="col-span-full text-xs text-slate-500 py-2">氣象數據連線逾時，請刷新頁面重試。</p>';
+        }
+      }
+    }
   </script>
 </body>
 </html>"""
 
 def sync_index_html(repo):
-    """自動確保 GitHub 上的 index.html 100% 完整無缺 (含雪道圖直連、深夜接駁與完整飲食模組)"""
+    """自動確保 GitHub 上的 index.html 100% 完整無缺 (含非同步非阻塞氣候與行程載入模組)"""
     try:
         file_content = repo.get_contents("index.html", ref="main")
         current_html = file_content.decoded_content.decode("utf-8")
         if current_html.strip() != COMPLETE_INDEX_HTML.strip():
             repo.update_file(
                 path="index.html",
-                message="Gemini Spark: 自動同步並修復 index.html 前端樣板",
+                message="Gemini Spark: 自動同步修復非同步架構 index.html 前端樣板",
                 content=COMPLETE_INDEX_HTML,
                 sha=file_content.sha,
                 branch="main"
@@ -300,7 +317,7 @@ def sync_index_html(repo):
     except Exception:
         repo.create_file(
             path="index.html",
-            message="Gemini Spark: 自動建立完整 index.html 前端",
+            message="Gemini Spark: 自動建立完整非同步 index.html 前端",
             content=COMPLETE_INDEX_HTML,
             branch="main"
         )
@@ -334,7 +351,7 @@ def run_spark_updater():
     gh = Github(auth=auth)
     repo = gh.get_repo(repo_name)
 
-    # 1. 自動檢測並修復 GitHub 上的 index.html
+    # 1. 自動檢測並修復 GitHub 上的 index.html (包含非同步氣象與行程載入架構)
     sync_index_html(repo)
 
     # 2. 抓取並透過 Gemini API 動態調整 itinerary.json
