@@ -1,0 +1,24 @@
+name: Python Code Verification
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'agent.py'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 簽出 PR 分支代碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python 3.11 環境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 執行 Python 語法與編譯測試
+        run: |
+          python -m py_compile agent.py
+          echo "語法檢查 100% 通過，代碼安全可編譯！"
