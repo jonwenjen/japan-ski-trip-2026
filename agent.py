@@ -4,7 +4,7 @@ import base64
 from google import genai
 from github import Github, Auth
 
-# 完整的 index.html 前端樣板 (包含 Tailwind CSS、折疊手風琴、氣候氣溫/降雪預報與地圖展示)
+# 完整的 index.html 前端樣板 (包含 Tailwind CSS、氣候預報、雪道圖直接展示、東京深夜交通與擴充飲食推薦)
 COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -22,7 +22,7 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
   <header class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-slate-800 py-8 px-4 text-center">
     <div class="max-w-4xl mx-auto">
       <span class="inline-block bg-blue-500/20 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 mb-2">
-        <i class="fa-solid fa-snowflake mr-1"></i> 日本滑雪技術團隊 ＆ 旅遊顧問規劃
+        <i class="fa-solid fa-snowflake mr-1"></i> 日本滑雪技術團隊 ＆ 冬季交通特急規劃
       </span>
       <h1 id="trip-title" class="text-2xl md:text-4xl font-extrabold text-white mb-2">載入行程中...</h1>
       <p id="flight-info" class="text-slate-400 text-xs md:text-sm"></p>
@@ -57,7 +57,6 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
   </footer>
 
   <script>
-    // 獲取志賀高原氣象數據 (緯度: 36.7025, 經度: 138.5133)
     function fetchShigaWeather() {
       var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
       
@@ -95,7 +94,6 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
               '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + (daily.snowfall_sum[0] || 0) + ' <span class="text-xs">cm</span></span>' +
             '</div>';
 
-          // 未來三日氣溫與雪量預報小區塊
           html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
           for (var i = 1; i <= 3; i++) {
             if (daily.time[i]) {
@@ -121,10 +119,8 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
         });
     }
 
-    // 執行氣象獲取
     fetchShigaWeather();
 
-    // 載入行程資料
     fetch("itinerary.json?t=" + Date.now())
       .then(function(res) {
         if (!res.ok) { throw new Error("HTTP " + res.status); }
@@ -145,85 +141,96 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
           var card = document.createElement("div");
           card.className = "bg-slate-900/90 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
 
+          // 雪場與雪道圖直連顯示模組（直接截圖展示）
           var skiHtml = "";
           if (day.ski_resort) {
-            skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30">' +
-              '<div class="flex items-center justify-between mb-2">' +
+            skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30 space-y-3">' +
+              '<div class="flex items-center justify-between">' +
                 '<h4 class="text-sky-400 font-bold text-sm md:text-base flex items-center gap-2">' +
-                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name +
+                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景雪道地圖' +
                 '</h4>' +
                 '<a href="' + day.ski_resort.official_link + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
-                  '官網全景圖 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
+                  '雪場官網 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
                 '</a>' +
               '</div>' +
-              '<p class="text-xs text-slate-300 mb-3">' + (day.ski_resort.features || "") + '</p>' +
-              '<div class="rounded-lg overflow-hidden border border-slate-700">' +
-                '<img src="' + day.ski_resort.map_img + '" alt="' + day.ski_resort.name + ' 雪道圖" class="w-full h-auto object-cover hover:scale-105 transition duration-300">' +
+              '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "") + '</p>' +
+              '<div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-lg">' +
+                '<img src="' + day.ski_resort.map_img + '" alt="' + day.ski_resort.name + ' 路線地圖截圖" class="w-full h-auto object-contain max-h-[600px] hover:scale-[1.02] transition duration-300 bg-slate-950">' +
               '</div>' +
             '</div>';
           }
 
+          // 友人12/15先行到達東京及最晚巴士/入住指引模組
           var friendHtml = "";
           if (day.friend_transit) {
-            friendHtml = '<div class="bg-amber-950/30 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-200">' +
-              '<div class="font-bold flex items-center gap-2 mb-1 text-amber-400">' +
-                '<i class="fa-solid fa-user-clock"></i> ' + (day.friend_transit.title || "友人交通接駁") +
+            friendHtml = '<div class="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl text-xs md:text-sm text-amber-200 shadow-md">' +
+              '<div class="font-bold flex items-center gap-2 mb-1.5 text-amber-300">' +
+                '<i class="fa-solid fa-clock-rotate-left text-amber-400"></i> ' + (day.friend_transit.title || "友人12/15東京先行與最晚接駁/飯店進房指引") +
               '</div>' +
-              '<p>' + day.friend_transit.details + '</p>' +
+              '<div class="leading-relaxed whitespace-pre-line text-slate-200">' + day.friend_transit.details + '</div>' +
             '</div>';
           }
 
+          // 市區推薦景點模組
           var attractionsHtml = "";
           if (day.attractions && day.attractions.length > 0) {
             var attItems = day.attractions.map(function(a) {
-              return '<li>・<a href="' + a.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></a></li>';
+              var locationTag = a.area ? '<span class="ml-1 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + a.area + '</span>' : '';
+              return '<li>・<a href="' + a.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + '</a>' + locationTag + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></li>';
             }).join("");
-            attractionsHtml = '<div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800 text-xs">' +
-              '<span class="font-bold text-indigo-400 block mb-1.5"><i class="fa-solid fa-compass mr-1"></i> 市區推薦景點：</span>' +
-              '<ul class="space-y-1">' + attItems + '</ul>' +
+            attractionsHtml = '<div class="bg-slate-950/50 p-3.5 rounded-xl border border-slate-800 text-xs">' +
+              '<span class="font-bold text-indigo-400 block mb-1.5"><i class="fa-solid fa-compass mr-1"></i> 市區推薦景點與地標：</span>' +
+              '<ul class="space-y-1.5">' + attItems + '</ul>' +
             '</div>';
           }
 
+          // 多樣化美食與美食地圖模組 (含地點標示與 Google Maps 連結)
           var recHtml = "";
           if (day.recommendations) {
             var buildList = function(items, hoverColor) {
-              if (!items || !items.length) { return '<li class="text-slate-500">暫無推薦項目</li>'; }
+              if (!items || !items.length) { return '<li class="text-slate-500">暫無相關店家推薦</li>'; }
               return items.map(function(item) {
-                return '<li>・<a href="' + item.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2">' + item.name + ' <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a></li>';
+                var areaTag = item.area ? '<span class="ml-1.5 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + item.area + '</span>' : '';
+                return '<li>・<a href="' + item.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2 font-medium">' + item.name + '</a>' + areaTag + ' <i class="fa-solid fa-map-pin text-rose-400 text-[10px] ml-1"></i></li>';
               }).join("");
             };
 
             var restaurantList = day.recommendations.restaurant || [];
-            var dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert_drink || [];
+            var izakayaList = day.recommendations.izakaya || day.recommendations.late_night || [];
+            var dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert || [];
             var beverageList = day.recommendations.beverage || [];
             var souvenirList = day.recommendations.souvenir || [];
 
-            recHtml = '<details class="group bg-slate-950/60 rounded-xl border border-slate-800 p-3.5 transition">' +
+            recHtml = '<details class="group bg-slate-950/60 rounded-xl border border-slate-800 p-3.5 transition" open>' +
               '<summary class="flex justify-between items-center text-xs md:text-sm font-semibold text-slate-300 hover:text-white">' +
                 '<span class="flex items-center gap-2">' +
                   '<i class="fa-solid fa-utensils text-emerald-400"></i>' +
-                  '<span>點選查看在地推薦：私房餐廳・甜點糕點・飲品・伴手禮</span>' +
+                  '<span>嚴選飲食選擇與周邊美食地圖（正餐・宵夜居酒屋・甜點・伴手禮）</span>' +
                 '</span>' +
                 '<span class="text-slate-500 group-open:rotate-180 transition-transform duration-200">' +
                   '<i class="fa-solid fa-chevron-down"></i>' +
                 '</span>' +
               '</summary>' +
-              '<div class="pt-4 border-t border-slate-800 mt-3 space-y-3.5 text-xs">' +
+              '<div class="pt-4 border-t border-slate-800 mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">' +
                 '<div>' +
-                  '<span class="font-bold text-emerald-400 block mb-1">【正餐餐廳】</span>' +
-                  '<ul class="space-y-1">' + buildList(restaurantList, "emerald") + '</ul>' +
+                  '<span class="font-bold text-emerald-400 block mb-1.5"><i class="fa-solid fa-bowl-rice mr-1"></i>【正餐與特色餐廳】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(restaurantList, "emerald") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-amber-400 block mb-1">【甜點・特色糕點】</span>' +
-                  '<ul class="space-y-1">' + buildList(dessertList, "amber") + '</ul>' +
+                  '<span class="font-bold text-red-400 block mb-1.5"><i class="fa-solid fa-beer-mug-empty mr-1"></i>【宵夜・深夜居酒屋】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(izakayaList, "red") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-cyan-400 block mb-1">【特色飲品・地酒】</span>' +
-                  '<ul class="space-y-1">' + buildList(beverageList, "cyan") + '</ul>' +
+                  '<span class="font-bold text-amber-400 block mb-1.5"><i class="fa-solid fa-cake-candles mr-1"></i>【甜點・在地名物糕點】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(dessertList, "amber") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-fuchsia-400 block mb-1">【必買伴手禮】</span>' +
-                  '<ul class="space-y-1">' + buildList(souvenirList, "fuchsia") + '</ul>' +
+                  '<span class="font-bold text-cyan-400 block mb-1.5"><i class="fa-solid fa-wine-glass mr-1"></i>【在地地酒・特色飲品】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(beverageList, "cyan") + '</ul>' +
+                '</div>' +
+                '<div class="md:col-span-2">' +
+                  '<span class="font-bold text-fuchsia-400 block mb-1.5"><i class="fa-solid fa-gift mr-1"></i>【必買在地伴手禮與銘菓】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(souvenirList, "fuchsia") + '</ul>' +
                 '</div>' +
               '</div>' +
             '</details>';
@@ -231,7 +238,7 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 
           var stayContent = day.stay;
           if (day.stay_map) {
-            stayContent = '<a href="' + day.stay_map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + day.stay + ' <i class="fa-solid fa-location-dot text-rose-400 text-[10px] ml-0.5"></i></a>';
+            stayContent = '<a href="' + day.stay_map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2 font-medium">' + day.stay + ' <i class="fa-solid fa-location-dot text-rose-400 text-[10px] ml-0.5"></i></a>';
           }
 
           card.innerHTML = 
@@ -242,11 +249,11 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
             '<div class="space-y-2 text-xs md:text-sm text-slate-300">' +
               '<div class="flex items-start gap-2">' +
                 '<i class="fa-solid fa-hotel text-indigo-400 mt-0.5"></i>' +
-                '<div><span class="text-slate-400">住宿：</span>' + stayContent + '</div>' +
+                '<div><span class="text-slate-400">住宿飯店：</span>' + stayContent + '</div>' +
               '</div>' +
               '<div class="flex items-start gap-2">' +
                 '<i class="fa-solid fa-train-subway text-emerald-400 mt-0.5"></i>' +
-                '<div><span class="text-slate-400">交通規劃：</span>' + day.transit + '</div>' +
+                '<div><span class="text-slate-400">冬季交通規劃 (新幹線/接駁巴士)：</span>' + day.transit + '</div>' +
               '</div>' +
             '</div>' +
             friendHtml +
@@ -266,14 +273,14 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 </html>"""
 
 def sync_index_html(repo):
-    """自動確保 GitHub 上的 index.html 100% 完整無缺 (包含志賀高原氣象降雪模組)"""
+    """自動確保 GitHub 上的 index.html 100% 完整無缺 (包含雪道圖直接展示與完整交通飲食結構)"""
     try:
         file_content = repo.get_contents("index.html", ref="main")
         current_html = file_content.decoded_content.decode("utf-8")
         if current_html.strip() != COMPLETE_INDEX_HTML.strip():
             repo.update_file(
                 path="index.html",
-                message="Gemini Spark: 自動同步並修復包含志賀高原氣象降雪模組之 index.html",
+                message="Gemini Spark: 自動同步並修復含雪道圖直連與多樣飲食之 index.html",
                 content=COMPLETE_INDEX_HTML,
                 sha=file_content.sha,
                 branch="main"
@@ -284,7 +291,7 @@ def sync_index_html(repo):
     except Exception:
         repo.create_file(
             path="index.html",
-            message="Gemini Spark: 自動建立包含氣象預報模組之完整 index.html 前端",
+            message="Gemini Spark: 自動建立完整 index.html 前端",
             content=COMPLETE_INDEX_HTML,
             branch="main"
         )
@@ -294,7 +301,10 @@ def run_spark_updater():
     gh_token = os.environ.get("GH_PAT", "").strip()
     repo_name = os.environ.get("GH_REPO", "").strip()
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    user_instruction = os.environ.get("SPARK_INSTRUCTION", "進行常規資料校驗與格式標準化").strip()
+    user_instruction = os.environ.get(
+        "SPARK_INSTRUCTION", 
+        "雪場雪道地圖直接顯示截圖，有人12/15先進東京到飯店規劃最晚直達巴士與最晚入住方式，交通全考量冬季接駁巴士與新幹線，多列出飲食選擇並提供google map與位置標示"
+    ).strip()
 
     if not gh_token or not repo_name or not gemini_key:
         raise ValueError("缺少必要的環境變數：GH_PAT, GH_REPO 或 GEMINI_API_KEY。")
@@ -303,26 +313,31 @@ def run_spark_updater():
     gh = Github(auth=auth)
     repo = gh.get_repo(repo_name)
 
-    # 1. 自動檢測並修復 GitHub 上的 index.html (包含志賀高原即時氣象降雪預報)
+    # 1. 自動檢測並修復 GitHub 上的 index.html
     sync_index_html(repo)
 
-    # 2. 抓取並透過 Gemini 3.6 Flash 動態調整 itinerary.json
+    # 2. 抓取並透過 Gemini API 動態調整 itinerary.json
     file_content = repo.get_contents("itinerary.json", ref="main")
     current_json = json.loads(file_content.decoded_content.decode("utf-8"))
 
     client = genai.Client(api_key=gemini_key)
     prompt = (
-        "你是一名專業的日本滑雪旅行社專員與資料工程師。請根據調整需求，更新現有的 itinerary.json。\n\n"
+        "你是一名專業的日本冬季滑雪特急規劃師與資料架構師。請根據最新需求更新並標準化 itinerary.json。\n\n"
+        "【重點升級需求】：\n"
+        "1. 雪場雪道地圖：在 day.ski_resort 中必須包含直接可預覽之高清雪道地圖圖片 URL (map_img)，無須再跳轉。\n"
+        "2. 12/15 友人先行抵達東京：於 12/15 的 day 資料中新增 friend_transit 物件，規劃最晚直達巴士 (例如成田/羽田/東京站深夜巴士) 以及最晚辦理入住 (Late Check-in) 的替代指引與聯絡方式。\n"
+        "3. 全行程交通：考量冬季氣候，優先安排冬季新幹線（如北陸新幹線）與雪場直達接駁巴士 (Winter Ski Shuttle Bus)，並於 transit 欄位明確註明。\n"
+        "4. 大幅擴充飲食選擇：在 day.recommendations 中提供豐富正餐 (restaurant)、居酒屋宵夜 (izakaya)、甜點糕點 (dessert_pastry)、地酒飲品 (beverage) 與伴手禮 (souvenir)。每個店家必須包含名稱 (name)、區域位置 (area，如「長野站前」、「湯田中」) 與標準 Google Maps 搜尋 URL (map)。\n\n"
         "【目前 JSON 資料】：\n" + json.dumps(current_json, ensure_ascii=False) + "\n\n"
-        "【動態調整需求】：\n" + user_instruction + "\n\n"
+        "【使用者動態調整需求】：\n" + user_instruction + "\n\n"
         "【輸出規範】：\n"
-        "1. 僅輸出合法的純 JSON 字串，嚴禁輸出 Markdown 標記（如 json）。\n"
+        "1. 僅輸出合法的純 JSON 字串，嚴禁包裹 Markdown 標記（例如 json ... ）。\n"
         "2. 維持所有既有欄位架構（trip_title, flights, days 陣列）。\n"
         "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：https://www.google.com/maps/search/?api=1&query=名稱\n"
     )
 
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model="gemini-2.5-flash",
         contents=prompt
     )
 
@@ -330,7 +345,7 @@ def run_spark_updater():
 
     repo.update_file(
         path="itinerary.json",
-        message="Gemini Spark 自動更新: " + user_instruction[:30],
+        message="Gemini Spark 自動更新 (含雪道圖、東京深夜巴士與豐富飲食): " + user_instruction[:30],
         content=clean_json_str,
         sha=file_content.sha,
         branch="main"
