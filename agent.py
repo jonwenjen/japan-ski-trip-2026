@@ -4,7 +4,7 @@ import base64
 from google import genai
 from github import Github, Auth
 
-# 完整的 index.html 前端樣板 (包含 Tailwind CSS、折疊手風琴與地圖展示)
+# 完整的 index.html 前端樣板 (包含 Tailwind CSS、氣象預報模組、折疊手風琴與地圖展示)
 COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -29,6 +29,26 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
     </div>
   </header>
 
+  <!-- 志賀高原即時氣溫與降雪預報模組 -->
+  <section class="max-w-4xl mx-auto px-4 mt-6">
+    <div class="bg-slate-900/90 border border-sky-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-md">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <h2 class="text-base md:text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-cloud-meatball text-sky-400"></i>
+          志賀高原 即時天氣與雪況預報
+        </h2>
+        <span class="text-[11px] bg-sky-500/10 text-sky-300 border border-sky-500/20 px-2.5 py-1 rounded-full font-mono flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Open-Meteo 即時連線
+        </span>
+      </div>
+      <div id="weather-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <div class="col-span-full py-4 text-slate-400 text-xs flex items-center justify-center gap-2">
+          <i class="fa-solid fa-spinner animate-spin text-sky-400"></i> 正在擷取志賀高原最新氣溫與降雪資訊...
+        </div>
+      </div>
+    </div>
+  </section>
+
   <main class="max-w-4xl mx-auto px-4 py-8 space-y-6" id="itinerary-container"></main>
 
   <footer class="text-center py-6 text-slate-500 text-xs border-t border-slate-900">
@@ -36,6 +56,53 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
   </footer>
 
   <script>
+    // 載入志賀高原即時氣象與降雪預報 (座標 Lat: 36.7025, Lon: 138.5133)
+    var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,snowfall&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
+    fetch(weatherUrl)
+      .then(function(res) { return res.json(); })
+      .then(function(wData) {
+        var current = wData.current || {};
+        var daily = wData.daily || {};
+        var wContainer = document.getElementById("weather-container");
+        var snowAccum = current.snowfall !== undefined ? current.snowfall : 0;
+
+        var html = 
+          '<div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-temperature-half text-rose-400"></i> 當前氣溫</span>' +
+            '<span class="text-xl font-extrabold text-white font-mono">' + (current.temperature_2m !== undefined ? current.temperature_2m : '--') + '°C</span>' +
+            '<span class="text-[10px] text-slate-400 mt-1">風速: ' + (current.wind_speed_10m !== undefined ? current.wind_speed_10m : 0) + ' km/h</span>' +
+          '</div>' +
+          '<div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+            '<span class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-snowflake text-sky-400"></i> 即時降雪</span>' +
+            '<span class="text-xl font-extrabold text-sky-300 font-mono">' + snowAccum + ' cm</span>' +
+            '<span class="text-[10px] text-slate-400 mt-1">相對濕度: ' + (current.relative_humidity_2m !== undefined ? current.relative_humidity_2m : 0) + '%</span>' +
+          '</div>';
+
+        if (daily.time && daily.time.length > 0) {
+          for (var i = 0; i < Math.min(2, daily.time.length); i++) {
+            var dDate = daily.time[i].substring(5);
+            var maxT = daily.temperature_2m_max[i];
+            var minT = daily.temperature_2m_min[i];
+            var snowSum = daily.snowfall_sum[i] !== undefined ? daily.snowfall_sum[i] : 0;
+            html += 
+              '<div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+                '<span class="text-xs text-slate-400 mb-1"><i class="fa-regular fa-calendar-days text-indigo-400"></i> ' + dDate + ' 預報</span>' +
+                '<span class="text-sm font-bold text-slate-200 font-mono">' + minT + '°C ~ ' + maxT + '°C</span>' +
+                '<span class="text-[10px] text-sky-300 mt-1"><i class="fa-solid fa-snowflake"></i> 預估降雪: ' + snowSum + ' cm</span>' +
+              '</div>';
+          }
+        }
+        wContainer.innerHTML = html;
+      })
+      .catch(function(err) {
+        console.error("氣象載入失敗:", err);
+        var wContainer = document.getElementById("weather-container");
+        if (wContainer) {
+          wContainer.innerHTML = '<div class="col-span-full text-xs text-slate-500 py-2">暫時無法取得志賀高原即時氣壓與天氣資料</div>';
+        }
+      });
+
+    // 載入行程 JSON
     fetch("itinerary.json?t=" + Date.now())
       .then(function(res) {
         if (!res.ok) { throw new Error("HTTP " + res.status); }
@@ -184,7 +251,7 @@ def sync_index_html(repo):
         if current_html.strip() != COMPLETE_INDEX_HTML.strip():
             repo.update_file(
                 path="index.html",
-                message="Gemini Spark: 自動同步並修復完整 index.html 前端",
+                message="Gemini Spark: 自動同步並修復完整 index.html 前端（包含氣象預報模組）",
                 content=COMPLETE_INDEX_HTML,
                 sha=file_content.sha,
                 branch="main"
@@ -195,7 +262,7 @@ def sync_index_html(repo):
     except Exception:
         repo.create_file(
             path="index.html",
-            message="Gemini Spark: 自動建立完整 index.html 前端",
+            message="Gemini Spark: 自動建立完整 index.html 前端（包含氣象預報模組）",
             content=COMPLETE_INDEX_HTML,
             branch="main"
         )
@@ -208,7 +275,7 @@ def run_spark_updater():
     user_instruction = os.environ.get("SPARK_INSTRUCTION", "進行常規資料校驗與格式標準化").strip()
 
     if not gh_token or not repo_name or not gemini_key:
-        raise ValueError("缺少必要的環境變數：GH_PAT, GH_REPO 或 GEMINI_API_KEY。")
+        raise ValueError("缺少必要的環境變態：GH_PAT, GH_REPO 或 GEMINI_API_KEY。")
 
     auth = Auth.Token(gh_token)
     gh = Github(auth=auth)
@@ -227,9 +294,9 @@ def run_spark_updater():
         "【目前 JSON 資料】：\n" + json.dumps(current_json, ensure_ascii=False) + "\n\n"
         "【動態調整需求】：\n" + user_instruction + "\n\n"
         "【輸出規範】：\n"
-        "1. 僅輸出合法的純 JSON 字串，嚴禁輸出 Markdown 標記（如 ```json）。\n"
+        "1. 僅輸出合法的純 JSON 字串，嚴禁輸出 Markdown 標記（如 json）。\n"
         "2. 維持所有既有欄位架構（trip_title, flights, days 陣列）。\n"
-        "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：[https://www.google.com/maps/search/?api=1&query=名稱](https://www.google.com/maps/search/?api=1&query=名稱)\n"
+        "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：https://www.google.com/maps/search/?api=1&query=名稱\n"
     )
 
     response = client.models.generate_content(
@@ -237,7 +304,7 @@ def run_spark_updater():
         contents=prompt
     )
 
-    clean_json_str = response.text.strip().replace("```json", "").replace("```", "").strip()
+    clean_json_str = response.text.strip().replace("json", "").replace("", "").strip()
 
     repo.update_file(
         path="itinerary.json",
