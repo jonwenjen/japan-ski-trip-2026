@@ -1,0 +1,278 @@
+{
+  "trip_title": "2026 日本滑雪・志賀高原極上粉雪行",
+  "flights": {
+    "arrival": "2026/12/11 抵達 (UA838)",
+    "departure": "2026/12/20 返程 (UA837)"
+  },
+  "days": [
+    {
+      "date": "12/11 (五)",
+      "day_title": "抵日整備 ➔ 門戶高崎",
+      "stay": "高崎站前商務飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Takasaki+Station+Hotels",
+      "transit": "成田機場搭乘 N'EX 特急至東京站（約 60 分），轉乘上越/北陸新幹線至高崎站（約 50 分）。",
+      "attractions": [
+        {"name": "高崎白衣大觀音", "map": "https://www.google.com/maps/search/?api=1&query=Takasaki+Byakue+Dai-Kannon"},
+        {"name": "少林山達磨寺", "map": "https://www.google.com/maps/search/?api=1&query=Shorinzan+Daruma-ji"}
+      ],
+      "recommendations": {
+        "restaurant": [
+          {"name": "登利平（高崎名物烤雞肉便當/定食）", "map": "https://www.google.com/maps/search/?api=1&query=Torihei+Takasaki"},
+          {"name": "高崎義大利麵名店（Shango）", "map": "https://www.google.com/maps/search/?api=1&query=Shango+Takasaki"}
+        ],
+        "dessert_pastry": [
+          {"name": "Gateau Festa Harada 烤麵包脆餅本店", "map": "https://www.google.com/maps/search/?api=1&query=Gateau+Festa+Harada+Takasaki"}
+        ],
+        "beverage": [
+          {"name": "群馬在地地酒專賣店", "map": "https://www.google.com/maps/search/?api=1&query=Gunma+Local+Sake+Takasaki"}
+        ],
+        "souvenir": [
+          {"name": "高崎達磨不倒翁", "map": "https://www.google.com/maps/search/?api=1&query=Takasaki+Daruma+Souvenir"}
+        ]
+      }
+    },
+    {
+      "date": "12/12 (六)",
+      "day_title": "丸沼高原滑雪 ➔ 移動至佐久平",
+      "stay": "佐久平站前飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Sakudaira+Station+Hotels",
+      "transit": "高崎自駕/專車前往丸沼高原（約 90 分）；午後返回高崎搭乘北陸新幹線至佐久平（約 25 分）。",
+      "ski_resort": {
+        "name": "丸沼高原滑雪場 (Marunuma Kogen)",
+        "features": "標高 2,000m 日光白根山纜車直達，擁有 4km 長距離巡弋雪道與豐富天然地形 U 型壁。",
+        "official_link": "https://www.marunuma.jp/",
+        "map_img": "https://www.marunuma.jp/winter/wp-content/themes/marunuma/assets/images/gelande/map.jpg"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "佐久平在地信州手打蕎麥麵", "map": "https://www.google.com/maps/search/?api=1&query=Sakudaira+Shinshu+Soba"},
+          {"name": "佐久安養寺味噌拉麵", "map": "https://www.google.com/maps/search/?api=1&query=Sakudaira+Anyoji+Miso+Ramen"}
+        ],
+        "dessert_pastry": [
+          {"name": "信州蘋果派名店", "map": "https://www.google.com/maps/search/?api=1&query=Sakudaira+Apple+Pie"}
+        ],
+        "beverage": [
+          {"name": "佐久酒藏巡禮（淺間山系純米地酒）", "map": "https://www.google.com/maps/search/?api=1&query=Saku+Sake+Brewery"}
+        ],
+        "souvenir": [
+          {"name": "安養寺味噌漬物", "map": "https://www.google.com/maps/search/?api=1&query=Anyoji+Miso+Souvenir"}
+        ]
+      }
+    },
+    {
+      "date": "12/13 (日)",
+      "day_title": "Takamine Mountain Park (Asama 2000) 走刃 Carving",
+      "stay": "佐久平站前飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Sakudaira+Station+Hotels",
+      "transit": "佐久平站搭乘千曲巴士雪場接駁專車直達雪場（單程約 55 分）。",
+      "ski_resort": {
+        "name": "Takamine Mountain Park (高峰 Mountain Park)",
+        "features": "標高 2,000m 內陸超低溫極乾粉雪，具備世界級機壓競賽雪道，高速走刃刻雪首選。",
+        "official_link": "https://asama2000.com/",
+        "map_img": "https://asama2000.com/wp-content/themes/takamine/images/gelande/map_2024.png"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "雪場景觀餐廳高品味豚汁定食", "map": "https://www.google.com/maps/search/?api=1&query=Takamine+Mountain+Park+Restaurant"}
+        ],
+        "dessert_pastry": [
+          {"name": "高原手做起司蛋糕", "map": "https://www.google.com/maps/search/?api=1&query=Karuizawa+Cheese+Cake"}
+        ],
+        "beverage": [
+          {"name": "信州白樺高原特選牛乳", "map": "https://www.google.com/maps/search/?api=1&query=Shinshu+Milk"}
+        ],
+        "souvenir": [
+          {"name": "信州輕井澤手工果醬", "map": "https://www.google.com/maps/search/?api=1&query=Sawaya+Jam"}
+        ]
+      }
+    },
+    {
+      "date": "12/14 (一)",
+      "day_title": "Takamine 晨滑 ➔ 傍晚進駐長野市",
+      "stay": "長野站周邊溫泉飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Nagano+Station+Hotels",
+      "transit": "午後自雪場搭乘接駁車返回佐久平，搭乘北陸新幹線直達長野站（約 20 分）。",
+      "ski_resort": {
+        "name": "Takamine Mountain Park (高峰 Mountain Park)",
+        "features": "挑戰競賽黑道及多變地形，晨間乾雪狀態極佳。",
+        "official_link": "https://asama2000.com/",
+        "map_img": "https://asama2000.com/wp-content/themes/takamine/images/gelande/map_2024.png"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "長野站前在地炭火信州黑毛和牛燒肉", "map": "https://www.google.com/maps/search/?api=1&query=Nagano+Station+Wagyu+Yakiniku"},
+          {"name": "明治亭長野店（醬汁炸豬排蓋飯）", "map": "https://www.google.com/maps/search/?api=1&query=Meijitei+Nagano+Station"}
+        ],
+        "dessert_pastry": [
+          {"name": "小布施堂 栗菓子善光寺店", "map": "https://www.google.com/maps/search/?api=1&query=Obusedo+Nagano"}
+        ],
+        "beverage": [
+          {"name": "信濃錦 / 志賀泉 在地純米大吟釀", "map": "https://www.google.com/maps/search/?api=1&query=Nagano+Local+Sake"}
+        ],
+        "souvenir": [
+          {"name": "八幡屋礒五郎 七味唐辛子", "map": "https://www.google.com/maps/search/?api=1&query=Yawataya+Isogoro+Nagano"}
+        ]
+      }
+    },
+    {
+      "date": "12/15 (二)",
+      "day_title": "長野前進志賀高原（熊之湯）＆ 友人會合日",
+      "stay": "Hotel & Onsen 2307 Shiga Kogen (連住第1晚)",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Hotel+%26+Onsen+2307+Shiga+Kogen",
+      "transit": "長野站東口 23 號站牌搭乘長電急行巴士直達志賀高原（約 75 分鐘）。",
+      "friend_transit": {
+        "title": "【關鍵時刻】友人成田抵達會合特急時刻表",
+        "details": "友人搭機 06:35 抵達成田 T3 ➔ 07:30 搭乘京成 Skyliner 4 號至日暮里（08:06 抵達）➔ 轉 JR 山手線至上野（08:16 抵達）➔ 08:35 上野搭乘北陸新幹線 Hakutaka 555 號直達長野（09:58 抵達）➔ 10:40 長野站東口搭乘長電急行巴士直達志賀高原（11:55 順利抵達飯店會合）。"
+      },
+      "ski_resort": {
+        "name": "志賀高原・熊之湯滑雪場 (Kumanoyu)",
+        "features": "朝北純天然無人造雪粉雪天堂，豐富饅頭坡與深雪密林吸收區。",
+        "official_link": "https://www.kumanoyu.co.jp/",
+        "map_img": "https://shigakogen-ski.or.jp/images/common/map-shiga-large.jpg"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "Hotel & Onsen 2307 溫泉會席料理", "map": "https://www.google.com/maps/search/?api=1&query=Hotel+%26+Onsen+2307+Shiga+Kogen"}
+        ],
+        "dessert_pastry": [
+          {"name": "熊之湯木屋手作熱可可與烘焙鬆餅", "map": "https://www.google.com/maps/search/?api=1&query=Kumanoyu+Lodge+Cafe"}
+        ],
+        "beverage": [
+          {"name": "志賀高原在地自釀 IPA 手工生啤酒", "map": "https://www.google.com/maps/search/?api=1&query=Shiga+Kogen+Beer"}
+        ],
+        "souvenir": [
+          {"name": "志賀高原硫磺泉限定溫泉皂", "map": "https://www.google.com/maps/search/?api=1&query=Shiga+Kogen+Onsen+Soap"}
+        ]
+      }
+    },
+    {
+      "date": "12/16 (三)",
+      "day_title": "志賀高原深度暢滑（熊之湯粉雪）",
+      "stay": "Hotel & Onsen 2307 Shiga Kogen (連住第2晚)",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Hotel+%26+Onsen+2307+Shiga+Kogen",
+      "transit": "Ski-in / Ski-out 門口直接下場滑行，全日志賀高原各區穿梭。",
+      "ski_resort": {
+        "name": "志賀高原・熊之湯滑雪場 (Kumanoyu)",
+        "features": "全天候享受全日本水份含量最低之極致羽量粉雪。",
+        "official_link": "https://www.kumanoyu.co.jp/",
+        "map_img": "https://shigakogen-ski.or.jp/images/common/map-shiga-large.jpg"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "山頂餐廳高山咖哩與現烤披薩", "map": "https://www.google.com/maps/search/?api=1&query=Kumanoyu+Ski+Curry"}
+        ],
+        "dessert_pastry": [
+          {"name": "信州焦糖布丁", "map": "https://www.google.com/maps/search/?api=1&query=Shinshu+Pudding"}
+        ],
+        "beverage": [
+          {"name": "信濃地酒清酒杯裝品酩組", "map": "https://www.google.com/maps/search/?api=1&query=Shinshu+Local+Sake"}
+        ],
+        "souvenir": [
+          {"name": "雪猴造型限定燒菓子", "map": "https://www.google.com/maps/search/?api=1&query=Snow+Monkey+Souvenir"}
+        ]
+      }
+    },
+    {
+      "date": "12/17 (四)",
+      "day_title": "橫手山 2,307m 制高點樹冰巡弋",
+      "stay": "Hotel & Onsen 2307 Shiga Kogen (連住第3晚)",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Hotel+%26+Onsen+2307+Shiga+Kogen",
+      "transit": "搭乘橫手山全景吊椅直達海拔 2,307m 全日本最高雪場頂端。",
+      "ski_resort": {
+        "name": "橫手山滑雪場 (Yokoteyama 2307m)",
+        "features": "標高 2,307m 全日本最高纜車雪場，漫遊樹冰群與俯瞰北阿爾卑斯雲海。",
+        "official_link": "https://yokoteyama2307.com/",
+        "map_img": "https://yokoteyama2307.com/"
+      },
+      "recommendations": {
+        "restaurant": [
+          {"name": "橫手山頂麵包房（日本最高海拔烤麵包）", "map": "https://www.google.com/maps/search/?api=1&query=Yokoteyama+2307+Bakery"}
+        ],
+        "dessert_pastry": [
+          {"name": "招牌現烤酥皮濃湯與雲海乳酪包", "map": "https://www.google.com/maps/search/?api=1&query=Yokoteyama+Crust+Soup"}
+        ],
+        "beverage": [
+          {"name": "橫手山頂手沖香濃熱咖啡", "map": "https://www.google.com/maps/search/?api=1&query=Yokoteyama+Coffee"}
+        ],
+        "souvenir": [
+          {"name": "橫手山 2307 標高限定紀念明信片與徽章", "map": "https://www.google.com/maps/search/?api=1&query=Yokoteyama+2307+Badge"}
+        ]
+      }
+    },
+    {
+      "date": "12/18 (五)",
+      "day_title": "告別雪山 ➔ 前進海港橫濱",
+      "stay": "橫濱港未來地區飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Minato+Mirai+Hotels",
+      "transit": "午後搭乘長電急行巴士回長野站（75分）➔ 北陸新幹線至東京站（85分）➔ JR 東海道線至橫濱站（25分）。",
+      "attractions": [
+        {"name": "橫濱港未來21 (Minato Mirai)", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Minato+Mirai+21"},
+        {"name": "橫濱紅磚倉庫", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Red+Brick+Warehouse"}
+      ],
+      "recommendations": {
+        "restaurant": [
+          {"name": "橫濱中華街知名小籠包/擔擔麵", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Chinatown+Restaurant"},
+          {"name": "橫濱牛鍋（荒井屋）牛肉壽喜燒", "map": "https://www.google.com/maps/search/?api=1&query=Arai-ya+Yokohama+Beef"}
+        ],
+        "dessert_pastry": [
+          {"name": "橫濱海風手工焦糖生巧克力（VANILLABEANS）", "map": "https://www.google.com/maps/search/?api=1&query=VANILLABEANS+Yokohama"}
+        ],
+        "beverage": [
+          {"name": "橫濱啤酒精釀工坊生啤", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Brewery"}
+        ],
+        "souvenir": [
+          {"name": "橫濱 ARIAKE 港町船型栗子蛋糕", "map": "https://www.google.com/maps/search/?api=1&query=Ariake+Harbour+Yokohama"}
+        ]
+      }
+    },
+    {
+      "date": "12/19 (六)",
+      "day_title": "橫濱港都漫遊 ＆ 友人搭機返國",
+      "stay": "橫濱市區飯店",
+      "stay_map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Minato+Mirai+Hotels",
+      "transit": "橫濱港未來線市區漫遊。友人搭乘成田特快直達成田機場。",
+      "friend_transit": {
+        "title": "【返程搭機】友人成田機場 T3 準時抵達動線",
+        "details": "友人需於 20:00 前抵達成田 T3 報到 ➔ 17:40 橫濱站 9/10 號月台候車 ➔ 17:59 搭乘 JR 成田特快 N'EX 49 號直達「空港第2ビル站」（19:28 抵達）➔ 出站沿藍色跑道步行 450 公尺（約 6 分鐘）於 19:35 充裕抵達 T3 報到櫃檯。"
+      },
+      "attractions": [
+        {"name": "山下公園玫瑰海濱長廊", "map": "https://www.google.com/maps/search/?api=1&query=Yamashita+Park+Yokohama"},
+        {"name": "橫濱鋼彈工廠周邊/地標塔空中花園夜景", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Landmark+Tower"}
+      ],
+      "recommendations": {
+        "restaurant": [
+          {"name": "橫濱勝烈庵炸豬排總本店", "map": "https://www.google.com/maps/search/?api=1&query=Katsuretsuan+Yokohama"}
+        ],
+        "dessert_pastry": [
+          {"name": "霧笛樓（橫濱瓦片法式巧克力蛋糕）", "map": "https://www.google.com/maps/search/?api=1&query=Motomachi+Mutekiro+Yokohama"}
+        ],
+        "beverage": [
+          {"name": "橫濱元町老舖手沖咖啡", "map": "https://www.google.com/maps/search/?api=1&query=Motomachi+Coffee+Yokohama"}
+        ],
+        "souvenir": [
+          {"name": "橫濱紅鞋女孩焦糖夾心餅", "map": "https://www.google.com/maps/search/?api=1&query=Yokohama+Red+Shoes+Cookies"}
+        ]
+      }
+    },
+    {
+      "date": "12/20 (日)",
+      "day_title": "終曲返國 ➔ 搭乘 UA837",
+      "stay": "溫暖的家",
+      "transit": "橫濱站搭乘成田特快 N'EX 直達機場第一航廈報到登機（搭乘 UA837 班機返國）。",
+      "recommendations": {
+        "restaurant": [
+          {"name": "成田機場免稅區拉麵與在地壽司美食街", "map": "https://www.google.com/maps/search/?api=1&query=Narita+Airport+Gourmet"}
+        ],
+        "dessert_pastry": [
+          {"name": "東京香蕉蛋糕與 ROYCE 生巧克力免稅限定", "map": "https://www.google.com/maps/search/?api=1&query=Narita+Airport+Duty+Free"}
+        ],
+        "beverage": [
+          {"name": "機場極上綠茶冷泡茶", "map": "https://www.google.com/maps/search/?api=1&query=Narita+Airport+Tea"}
+        ],
+        "souvenir": [
+          {"name": "日本各地精選伴手禮免稅包", "map": "https://www.google.com/maps/search/?api=1&query=Narita+Airport+Souvenir"}
+        ]
+      }
+    }
+  ]
+}
