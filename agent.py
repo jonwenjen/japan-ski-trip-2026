@@ -214,7 +214,7 @@ def run_spark_updater():
     gh = Github(auth=auth)
     repo = gh.get_repo(repo_name)
 
-    # 1. 自動檢測並修復 GitHub 上的 index.html (免手動複製)
+    # 1. 自動檢測並修復 GitHub 上的 index.html (由程式自動寫入，不經聊天室)
     sync_index_html(repo)
 
     # 2. 抓取並透過 Gemini 3.6 Flash 動態調整 itinerary.json
