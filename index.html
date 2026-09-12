@@ -22,22 +22,26 @@
     </div>
   </header>
 
-  <!-- 志賀高原即時氣候與降雪預報模組 -->
+  <!-- 志賀高原頂部即時氣溫與降雪預報模組 -->
   <section class="max-w-4xl mx-auto px-4 mt-6">
-    <div id="weather-card" class="bg-slate-900/80 rounded-2xl border border-sky-500/30 p-5 shadow-xl backdrop-blur">
+    <div id="weather-card" class="bg-slate-900/90 rounded-2xl border border-sky-500/30 p-5 shadow-2xl backdrop-blur">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-cloud-sun-rain text-sky-400 text-lg"></i>
-          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣候與降雪預報</h3>
+          <i class="fa-solid fa-temperature-half text-sky-400 text-xl"></i>
+          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣溫與降雪預報</h3>
         </div>
-        <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800">
-          <i class="fa-solid fa-sync fa-spin mr-1"></i>Open-Meteo 即時連線
+        <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800 font-mono flex items-center gap-1">
+          <span class="relative flex h-2 w-2 mr-1">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+          </span>
+          Open-Meteo 即時連線
         </span>
       </div>
       
       <div id="weather-content" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-        <div class="col-span-2 md:col-span-4 py-4 text-slate-400 text-xs">
-          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>正在獲取志賀高原山區氣象數據...
+        <div class="col-span-2 md:col-span-4 py-4 text-slate-400 text-xs flex items-center justify-center">
+          <i class="fa-solid fa-circle-notch fa-spin mr-2 text-sky-400"></i>正在獲取志賀高原山區即時氣溫與雪況數據...
         </div>
       </div>
     </div>
@@ -51,7 +55,6 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      // 採用獨立非阻塞非同步機制，確保行程載入與氣象模組互不干擾
       loadItinerary();
       fetchShigaWeather();
     });
@@ -91,8 +94,8 @@
                 '<h4 class="text-sky-400 font-bold text-sm md:text-base flex items-center gap-2">' +
                   '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景路線雪道圖' +
                 '</h4>' +
-                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
-                  '官網資訊 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
+                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1">' +
+                  '官網資訊 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>' +
                 '</a>' +
               '</div>' +
               '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "包含初級、中級、高級雪道與纜車路線統整。") + '</p>' +
@@ -219,9 +222,9 @@
 
     async function fetchShigaWeather() {
       var weatherContainer = document.getElementById("weather-content");
+      // 志賀高原中心區域座標: 緯度 36.7025, 經度 138.5133
       var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
       
-      // 設定 6 秒 Timeout 機制防止氣象 API 卡死整個頁面
       var controller = new AbortController();
       var timeoutId = setTimeout(function() { controller.abort(); }, 6000);
 
@@ -242,23 +245,24 @@
         var currentTemp = current.temperature_2m;
         var currentSnow = current.snowfall || 0;
         var currentWind = current.wind_speed_10m;
+        var currentHumidity = current.relative_humidity_2m;
 
         var html = '' +
-          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-            '<span class="text-xs text-slate-400 mb-1">即時氣溫</span>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center shadow-inner">' +
+            '<span class="text-[11px] text-slate-400 mb-1"><i class="fa-solid fa-temperature-three-quarters mr-1 text-rose-400"></i>即時氣溫</span>' +
             '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
           '</div>' +
-          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-            '<span class="text-xs text-slate-400 mb-1">當前降雪量</span>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center shadow-inner">' +
+            '<span class="text-[11px] text-slate-400 mb-1"><i class="fa-solid fa-snowflake mr-1 text-cyan-300"></i>當前降雪強度</span>' +
             '<span class="text-xl md:text-2xl font-black text-cyan-300 font-mono">' + currentSnow + ' <span class="text-xs">cm/h</span></span>' +
           '</div>' +
-          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-            '<span class="text-xs text-slate-400 mb-1">山區陣風風速</span>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center shadow-inner">' +
+            '<span class="text-[11px] text-slate-400 mb-1"><i class="fa-solid fa-wind mr-1 text-indigo-300"></i>山區風速</span>' +
             '<span class="text-xl md:text-2xl font-black text-indigo-300 font-mono">' + currentWind + ' <span class="text-xs">km/h</span></span>' +
           '</div>' +
-          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
-            '<span class="text-xs text-slate-400 mb-1">預測累積降雪(今日)</span>' +
-            '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + ((daily.snowfall_sum && daily.snowfall_sum[0]) || 0) + ' <span class="text-xs">cm</span></span>' +
+          '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center shadow-inner">' +
+            '<span class="text-[11px] text-slate-400 mb-1"><i class="fa-solid fa-droplet mr-1 text-blue-400"></i>相對濕度</span>' +
+            '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + currentHumidity + ' <span class="text-xs">%</span></span>' +
           '</div>';
 
         html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
@@ -268,10 +272,10 @@
             var maxT = daily.temperature_2m_max[i];
             var minT = daily.temperature_2m_min[i];
             var snowSum = (daily.snowfall_sum && daily.snowfall_sum[i]) || 0;
-            html += '<div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">' +
-              '<div class="text-slate-400 font-mono mb-0.5">' + dateStr + '</div>' +
+            html += '<div class="bg-slate-950/50 p-2.5 rounded-lg border border-slate-800/80 hover:border-sky-500/30 transition">' +
+              '<div class="text-slate-400 font-mono mb-0.5 text-[11px]">' + dateStr + ' 預報</div>' +
               '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
-              '<div class="text-sky-300 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>降雪 ' + snowSum + ' cm</div>' +
+              '<div class="text-sky-300 font-semibold mt-0.5 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>預估降雪 ' + snowSum + ' cm</div>' +
             '</div>';
           }
         }
@@ -283,7 +287,7 @@
         console.error("氣象資料載入失敗:", err);
         if (weatherContainer) {
           weatherContainer.innerHTML = 
-            '<p class="col-span-full text-xs text-slate-500 py-2">氣象數據連線逾時，請刷新頁面重試。</p>';
+            '<p class="col-span-full text-xs text-slate-400 py-2">志賀高原即時氣象連線逾時，請刷新頁面重試。</p>';
         }
       }
     }
