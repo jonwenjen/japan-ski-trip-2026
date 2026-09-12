@@ -1,0 +1,36 @@
+name: Gemini Spark Auto Updater
+
+on:
+  workflow_dispatch:
+    inputs:
+      spark_instruction:
+        description: '輸入微調指令（例如：12/14 晚上加一家長野和牛炭火燒肉）'
+        required: true
+        default: '檢查行程時間節點並校正所有 Google 地圖連結'
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  spark-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 簽出代碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安裝套件
+        run: |
+          pip install google-genai PyGithub
+
+      - name: 執行更新
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SPARK_INSTRUCTION: ${{ inputs.spark_instruction }}
+        run: |
+          python agent.py
