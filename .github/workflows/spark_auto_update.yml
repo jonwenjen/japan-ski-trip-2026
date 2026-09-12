@@ -4,11 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       spark_instruction:
-        description: '輸入微調指令（例如：12/14 晚上加一家長野和牛炭火燒肉）'
+        description: '輸入微調指令'
         required: true
         default: '檢查行程時間節點並校正所有 Google 地圖連結'
   schedule:
     - cron: '0 0 * * *'
+  # 加入以下設定：只要 main 分支上的 agent.py 有變更（例如 PR 被合併），就自動執行更新
+  push:
+    branches:
+      - main
+    paths:
+      - 'agent.py'
 
 jobs:
   spark-run:
@@ -31,6 +37,6 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GH_REPO: ${{ github.repository }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          SPARK_INSTRUCTION: ${{ inputs.spark_instruction }}
+          SPARK_INSTRUCTION: ${{ inputs.spark_instruction || '自動同步新版 agent.py 前端功能' }}
         run: |
           python agent.py
