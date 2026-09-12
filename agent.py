@@ -4,7 +4,7 @@ import base64
 from google import genai
 from github import Github, Auth
 
-# 完整的 index.html 前端樣板 (包含 Tailwind CSS、氣候預報、雪道圖直接展示、東京深夜交通與擴充飲食推薦)
+# 完整的 index.html 前端樣板 (包含 Tailwind CSS、氣候預報、雪道圖直連與強效備用圖、東京深夜交通與擴充飲食推薦)
 COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -29,13 +29,13 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
     </div>
   </header>
 
-  <!-- 志賀高原即時氣象與降雪預報模組 -->
+  <!-- 志賀高原即時氣候與降雪預報模組 -->
   <section class="max-w-4xl mx-auto px-4 mt-6">
     <div id="weather-card" class="bg-slate-900/80 rounded-2xl border border-sky-500/30 p-5 shadow-xl backdrop-blur">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-cloud-sun-rain text-sky-400 text-lg"></i>
-          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣溫與降雪預報</h3>
+          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣候與降雪預報</h3>
         </div>
         <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800">
           <i class="fa-solid fa-sync fa-spin mr-1"></i>Open-Meteo 即時連線
@@ -141,37 +141,46 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
           var card = document.createElement("div");
           card.className = "bg-slate-900/90 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
 
-          // 雪場與雪道圖直連顯示模組（直接截圖展示）
+          // 1. 雪場與雪道圖直連顯示模組（附帶自動備用防破圖機制）
           var skiHtml = "";
           if (day.ski_resort) {
+            var fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg";
+            var imgSrc = day.ski_resort.map_img || fallbackImg;
+            
             skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30 space-y-3">' +
-              '<div class="flex items-center justify-between">' +
+              '<div class="flex items-center justify-between flex-wrap gap-2">' +
                 '<h4 class="text-sky-400 font-bold text-sm md:text-base flex items-center gap-2">' +
-                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景雪道地圖' +
+                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景路線雪道圖' +
                 '</h4>' +
-                '<a href="' + day.ski_resort.official_link + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
-                  '雪場官網 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
+                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
+                  '官網資訊 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
                 '</a>' +
               '</div>' +
-              '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "") + '</p>' +
-              '<div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-lg">' +
-                '<img src="' + day.ski_resort.map_img + '" alt="' + day.ski_resort.name + ' 路線地圖截圖" class="w-full h-auto object-contain max-h-[600px] hover:scale-[1.02] transition duration-300 bg-slate-950">' +
+              '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "包含初級、中級、高級雪道與纜車路線統整。") + '</p>' +
+              '<div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-lg relative group">' +
+                '<img src="' + imgSrc + '" alt="' + day.ski_resort.name + ' 雪道圖" ' +
+                     'onerror="this.onerror=null; this.src=\'' + fallbackImg + '\';" ' +
+                     'class="w-full h-auto object-contain max-h-[650px] hover:scale-[1.01] transition duration-300 bg-slate-950 block">' +
               '</div>' +
             '</div>';
           }
 
-          // 友人12/15先行到達東京及最晚巴士/入住指引模組
+          // 2. 友人 12/15 先行抵達東京與最晚直達巴士/Late Check-in 飯店指引模組
           var friendHtml = "";
           if (day.friend_transit) {
-            friendHtml = '<div class="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl text-xs md:text-sm text-amber-200 shadow-md">' +
-              '<div class="font-bold flex items-center gap-2 mb-1.5 text-amber-300">' +
-                '<i class="fa-solid fa-clock-rotate-left text-amber-400"></i> ' + (day.friend_transit.title || "友人12/15東京先行與最晚接駁/飯店進房指引") +
+            friendHtml = '<div class="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl text-xs md:text-sm text-amber-200 shadow-md space-y-2">' +
+              '<div class="font-bold flex items-center gap-2 text-amber-300 text-base">' +
+                '<i class="fa-solid fa-bus text-amber-400"></i> ' + (day.friend_transit.title || "友人12/15先行到達東京與深夜接駁指引") +
               '</div>' +
-              '<div class="leading-relaxed whitespace-pre-line text-slate-200">' + day.friend_transit.details + '</div>' +
+              '<div class="space-y-1.5 text-slate-200 leading-relaxed">' +
+                '<div><strong class="text-amber-400">🚌 最晚直達巴士與機場接駁：</strong>' + (day.friend_transit.late_bus || "成田/羽田機場最晚東京站/新宿直達深夜巴士(Keisei Bus/Airport Limousine)，班次營運至深夜 23:30/01:00。") + '</div>' +
+                '<div><strong class="text-amber-400">🔑 飯店最晚入住 (Late Check-in) 方案：</strong>' + (day.friend_transit.check_in_guide || "請提前向飯店備註晚到，若過 midnight 可使用自助 Check-in 機台或撥打門口 Emergency Call 密碼鎖進房。") + '</div>' +
+                (day.friend_transit.details ? '<div class="pt-1 text-slate-300 text-xs border-t border-amber-900/50">' + day.friend_transit.details + '</div>' : '') +
+              '</div>' +
             '</div>';
           }
 
-          // 市區推薦景點模組
+          // 3. 市區與週邊推薦景點模組
           var attractionsHtml = "";
           if (day.attractions && day.attractions.length > 0) {
             var attItems = day.attractions.map(function(a) {
@@ -184,7 +193,7 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
             '</div>';
           }
 
-          // 多樣化美食與美食地圖模組 (含地點標示與 Google Maps 連結)
+          // 4. 多樣化美食與美食地圖模組 (包含地點標示與 Google Maps 連結)
           var recHtml = "";
           if (day.recommendations) {
             var buildList = function(items, hoverColor) {
@@ -253,7 +262,7 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
               '</div>' +
               '<div class="flex items-start gap-2">' +
                 '<i class="fa-solid fa-train-subway text-emerald-400 mt-0.5"></i>' +
-                '<div><span class="text-slate-400">冬季交通規劃 (新幹線/接駁巴士)：</span>' + day.transit + '</div>' +
+                '<div><span class="text-slate-400">冬季交通規劃 (北陸新幹線/特急/雪場巴士)：</span>' + day.transit + '</div>' +
               '</div>' +
             '</div>' +
             friendHtml +
@@ -273,14 +282,14 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 </html>"""
 
 def sync_index_html(repo):
-    """自動確保 GitHub 上的 index.html 100% 完整無缺 (包含雪道圖直接展示與完整交通飲食結構)"""
+    """自動確保 GitHub 上的 index.html 100% 完整無缺 (含雪道圖直連、深夜接駁與完整飲食模組)"""
     try:
         file_content = repo.get_contents("index.html", ref="main")
         current_html = file_content.decoded_content.decode("utf-8")
         if current_html.strip() != COMPLETE_INDEX_HTML.strip():
             repo.update_file(
                 path="index.html",
-                message="Gemini Spark: 自動同步並修復含雪道圖直連與多樣飲食之 index.html",
+                message="Gemini Spark: 自動同步並修復 index.html 前端樣板",
                 content=COMPLETE_INDEX_HTML,
                 sha=file_content.sha,
                 branch="main"
@@ -297,13 +306,25 @@ def sync_index_html(repo):
         )
         print("index.html 已自動建立成功！")
 
+def clean_json_response(raw_text):
+    """清理 Gemini 回傳的 JSON 字串，去除 Markdown code block 標記"""
+    text = raw_text.strip()
+    if text.startswith(""):
+        lines = text.splitlines()
+        if lines[0].startswith(""):
+            lines = lines[1:]
+        if lines and lines[-1].startswith(""):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    return text
+
 def run_spark_updater():
     gh_token = os.environ.get("GH_PAT", "").strip()
     repo_name = os.environ.get("GH_REPO", "").strip()
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     user_instruction = os.environ.get(
         "SPARK_INSTRUCTION", 
-        "雪場雪道地圖直接顯示截圖，有人12/15先進東京到飯店規劃最晚直達巴士與最晚入住方式，交通全考量冬季接駁巴士與新幹線，多列出飲食選擇並提供google map與位置標示"
+        "雪場雪道地圖沒有顯示 從網站或網路上搜尋並截圖直接顯示 不需再另外點，有人12/15先進東京 到飯店請規劃最晚直達巴士以及最晚進入飯店方式，所有交通考量冬季接駁巴士或新幹線，再多列出飲食選擇並提供google map並表示位置"
     ).strip()
 
     if not gh_token or not repo_name or not gemini_key:
@@ -322,18 +343,23 @@ def run_spark_updater():
 
     client = genai.Client(api_key=gemini_key)
     prompt = (
-        "你是一名專業的日本冬季滑雪特急規劃師與資料架構師。請根據最新需求更新並標準化 itinerary.json。\n\n"
-        "【重點升級需求】：\n"
-        "1. 雪場雪道地圖：在 day.ski_resort 中必須包含直接可預覽之高清雪道地圖圖片 URL (map_img)，無須再跳轉。\n"
-        "2. 12/15 友人先行抵達東京：於 12/15 的 day 資料中新增 friend_transit 物件，規劃最晚直達巴士 (例如成田/羽田/東京站深夜巴士) 以及最晚辦理入住 (Late Check-in) 的替代指引與聯絡方式。\n"
-        "3. 全行程交通：考量冬季氣候，優先安排冬季新幹線（如北陸新幹線）與雪場直達接駁巴士 (Winter Ski Shuttle Bus)，並於 transit 欄位明確註明。\n"
-        "4. 大幅擴充飲食選擇：在 day.recommendations 中提供豐富正餐 (restaurant)、居酒屋宵夜 (izakaya)、甜點糕點 (dessert_pastry)、地酒飲品 (beverage) 與伴手禮 (souvenir)。每個店家必須包含名稱 (name)、區域位置 (area，如「長野站前」、「湯田中」) 與標準 Google Maps 搜尋 URL (map)。\n\n"
+        "你是一名專業的日本冬季滑雪特急規劃師與 JSON 資料架構師。請根據使用者最新需求更新並標準化 itinerary.json。\n\n"
+        "【重點需求規範】：\n"
+        "1. 雪場雪道地圖 (ski_resort)：對於包含滑雪的日期， day.ski_resort 中必須包含直接可載入之圖檔 URL (map_img)，例如 Wikipedia 圖片或極高穩定度圖片網址（如: https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg），且具備 official_link 官網連結與 features 說明。\n"
+        "2. 12/15 友人先行抵達東京：於 12/15 的 day 資料中必須包含 friend_transit 物件，詳列最晚直達巴士 (late_bus，如成田/羽田/東京站/新宿深夜機場巴士班次) 以及最晚進飯店 (check_in_guide，Late Check-in 聯絡、自助報到或密碼鎖等備用方案)。\n"
+        "3. 冬季交通全規劃 (transit)：全行程全面採用「北陸新幹線」、「長野電鐵 Snow Monkey Express」與「志賀高原冬季接駁巴士 (Nagaden Ski Shuttle Bus)」，嚴格考量雪季積雪情況。\n"
+        "4. 擴充豐富飲食與美食地圖 (recommendations)：在 day.recommendations 中詳細列出：\n"
+        "   - restaurant: 正餐與在地名店\n"
+        "   - izakaya: 宵夜、深夜居酒屋\n"
+        "   - dessert_pastry: 甜點與伴手禮名物\n"
+        "   - beverage: 在地地酒與特色飲品\n"
+        "   - souvenir: 必買在地伴手禮\n"
+        "   每個店家必須具備：name (名稱)、area (位置標示，如「長野站前」、「燒額山」) 與 map (標準 Google Maps 搜尋 URL: https://www.google.com/maps/search/?api=1&query=名稱)。\n\n"
         "【目前 JSON 資料】：\n" + json.dumps(current_json, ensure_ascii=False) + "\n\n"
-        "【使用者動態調整需求】：\n" + user_instruction + "\n\n"
+        "【使用者動態需求】：\n" + user_instruction + "\n\n"
         "【輸出規範】：\n"
-        "1. 僅輸出合法的純 JSON 字串，嚴禁包裹 Markdown 標記（例如 json ... ）。\n"
-        "2. 維持所有既有欄位架構（trip_title, flights, days 陣列）。\n"
-        "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：https://www.google.com/maps/search/?api=1&query=名稱\n"
+        "1. 僅輸出合法且嚴謹的純 JSON 字串，絕對不要包裹 Markdown 標記（例如 json ... ）。\n"
+        "2. 完整保留 trip_title, flights, days 陣列等既有結構，並補充新增的擴充欄位。\n"
     )
 
     response = client.models.generate_content(
@@ -341,11 +367,11 @@ def run_spark_updater():
         contents=prompt
     )
 
-    clean_json_str = response.text.strip().replace("json", "").replace("", "").strip()
+    clean_json_str = clean_json_response(response.text)
 
     repo.update_file(
         path="itinerary.json",
-        message="Gemini Spark 自動更新 (含雪道圖、東京深夜巴士與豐富飲食): " + user_instruction[:30],
+        message="Gemini Spark 自動更新 (含雪道圖直連、東京深夜交通與豐富飲食): " + user_instruction[:30],
         content=clean_json_str,
         sha=file_content.sha,
         branch="main"
