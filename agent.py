@@ -4,7 +4,7 @@ import base64
 from google import genai
 from github import Github, Auth
 
-# 完整的 index.html 前端樣板 (包含 Tailwind CSS、折疊手風琴與地圖展示)
+# 完整的 index.html 前端樣板 (包含 Tailwind CSS、折疊手風琴、氣候氣溫/降雪預報與地圖展示)
 COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -29,6 +29,27 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
     </div>
   </header>
 
+  <!-- 志賀高原即時氣象與降雪預報模組 -->
+  <section class="max-w-4xl mx-auto px-4 mt-6">
+    <div id="weather-card" class="bg-slate-900/80 rounded-2xl border border-sky-500/30 p-5 shadow-xl backdrop-blur">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-cloud-sun-rain text-sky-400 text-lg"></i>
+          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣溫與降雪預報</h3>
+        </div>
+        <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800">
+          <i class="fa-solid fa-sync fa-spin mr-1"></i>Open-Meteo 即時連線
+        </span>
+      </div>
+      
+      <div id="weather-content" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <div class="col-span-2 md:col-span-4 py-4 text-slate-400 text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>正在獲取志賀高原山區氣象數據...
+        </div>
+      </div>
+    </div>
+  </section>
+
   <main class="max-w-4xl mx-auto px-4 py-8 space-y-6" id="itinerary-container"></main>
 
   <footer class="text-center py-6 text-slate-500 text-xs border-t border-slate-900">
@@ -36,6 +57,74 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
   </footer>
 
   <script>
+    // 獲取志賀高原氣象數據 (緯度: 36.7025, 經度: 138.5133)
+    function fetchShigaWeather() {
+      var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
+      
+      fetch(weatherUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var current = data.current;
+          var daily = data.daily;
+          var weatherContainer = document.getElementById("weather-content");
+          
+          if (!current || !daily) {
+            weatherContainer.innerHTML = '<p class="col-span-full text-xs text-rose-400">無法解析氣象數據</p>';
+            return;
+          }
+
+          var currentTemp = current.temperature_2m;
+          var currentSnow = current.snowfall || 0;
+          var currentWind = current.wind_speed_10m;
+
+          var html = '' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">即時氣溫</span>' +
+              '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">當前降雪量</span>' +
+              '<span class="text-xl md:text-2xl font-black text-cyan-300 font-mono">' + currentSnow + ' <span class="text-xs">cm/h</span></span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">山區陣風風速</span>' +
+              '<span class="text-xl md:text-2xl font-black text-indigo-300 font-mono">' + currentWind + ' <span class="text-xs">km/h</span></span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">預測累積降雪(今日)</span>' +
+              '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + (daily.snowfall_sum[0] || 0) + ' <span class="text-xs">cm</span></span>' +
+            '</div>';
+
+          // 未來三日氣溫與雪量預報小區塊
+          html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
+          for (var i = 1; i <= 3; i++) {
+            if (daily.time[i]) {
+              var dateStr = daily.time[i].substring(5);
+              var maxT = daily.temperature_2m_max[i];
+              var minT = daily.temperature_2m_min[i];
+              var snowSum = daily.snowfall_sum[i] || 0;
+              html += '<div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">' +
+                '<div class="text-slate-400 font-mono mb-0.5">' + dateStr + '</div>' +
+                '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
+                '<div class="text-sky-300 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>降雪 ' + snowSum + ' cm</div>' +
+              '</div>';
+            }
+          }
+          html += '</div>';
+
+          weatherContainer.innerHTML = html;
+        })
+        .catch(function(err) {
+          console.error("氣象資料載入失敗:", err);
+          document.getElementById("weather-content").innerHTML = 
+            '<p class="col-span-full text-xs text-slate-500 py-2">氣象數據連線逾時，請刷新頁面重試。</p>';
+        });
+    }
+
+    // 執行氣象獲取
+    fetchShigaWeather();
+
+    // 載入行程資料
     fetch("itinerary.json?t=" + Date.now())
       .then(function(res) {
         if (!res.ok) { throw new Error("HTTP " + res.status); }
@@ -177,14 +266,14 @@ COMPLETE_INDEX_HTML = """<!DOCTYPE html>
 </html>"""
 
 def sync_index_html(repo):
-    """自動確保 GitHub 上的 index.html 100% 完整無缺"""
+    """自動確保 GitHub 上的 index.html 100% 完整無缺 (包含志賀高原氣象降雪模組)"""
     try:
         file_content = repo.get_contents("index.html", ref="main")
         current_html = file_content.decoded_content.decode("utf-8")
         if current_html.strip() != COMPLETE_INDEX_HTML.strip():
             repo.update_file(
                 path="index.html",
-                message="Gemini Spark: 自動同步並修復完整 index.html 前端",
+                message="Gemini Spark: 自動同步並修復包含志賀高原氣象降雪模組之 index.html",
                 content=COMPLETE_INDEX_HTML,
                 sha=file_content.sha,
                 branch="main"
@@ -195,7 +284,7 @@ def sync_index_html(repo):
     except Exception:
         repo.create_file(
             path="index.html",
-            message="Gemini Spark: 自動建立完整 index.html 前端",
+            message="Gemini Spark: 自動建立包含氣象預報模組之完整 index.html 前端",
             content=COMPLETE_INDEX_HTML,
             branch="main"
         )
@@ -214,7 +303,7 @@ def run_spark_updater():
     gh = Github(auth=auth)
     repo = gh.get_repo(repo_name)
 
-    # 1. 自動檢測並修復 GitHub 上的 index.html (由程式自動寫入，不經聊天室)
+    # 1. 自動檢測並修復 GitHub 上的 index.html (包含志賀高原即時氣象降雪預報)
     sync_index_html(repo)
 
     # 2. 抓取並透過 Gemini 3.6 Flash 動態調整 itinerary.json
@@ -227,9 +316,9 @@ def run_spark_updater():
         "【目前 JSON 資料】：\n" + json.dumps(current_json, ensure_ascii=False) + "\n\n"
         "【動態調整需求】：\n" + user_instruction + "\n\n"
         "【輸出規範】：\n"
-        "1. 僅輸出合法的純 JSON 字串，嚴禁輸出 Markdown 標記（如 ```json）。\n"
+        "1. 僅輸出合法的純 JSON 字串，嚴禁輸出 Markdown 標記（如 json）。\n"
         "2. 維持所有既有欄位架構（trip_title, flights, days 陣列）。\n"
-        "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：[https://www.google.com/maps/search/?api=1&query=名稱](https://www.google.com/maps/search/?api=1&query=名稱)\n"
+        "3. 新增地點必須附帶標準 Google Maps 搜尋 URL：https://www.google.com/maps/search/?api=1&query=名稱\n"
     )
 
     response = client.models.generate_content(
@@ -237,7 +326,7 @@ def run_spark_updater():
         contents=prompt
     )
 
-    clean_json_str = response.text.strip().replace("```json", "").replace("```", "").strip()
+    clean_json_str = response.text.strip().replace("json", "").replace("", "").strip()
 
     repo.update_file(
         path="itinerary.json",
