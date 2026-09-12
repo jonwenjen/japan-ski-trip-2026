@@ -9,34 +9,35 @@
   <style>
     details > summary { list-style: none; cursor: pointer; user-select: none; }
     details > summary::-webkit-details-marker { display: none; }
+    .glass-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
-  <header class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-slate-800 py-8 px-4 text-center">
-    <div class="max-w-4xl mx-auto">
-      <span class="inline-block bg-blue-500/20 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 mb-2">
-        <i class="fa-solid fa-snowflake mr-1"></i> 日本滑雪技術團隊 ＆ 冬季交通特急規劃
+  <header class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-slate-800 py-8 px-4 text-center relative overflow-hidden">
+    <div class="max-w-4xl mx-auto relative z-10">
+      <span class="inline-flex items-center gap-1.5 bg-blue-500/20 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 mb-3">
+        <i class="fa-solid fa-snowflake animate-spin text-sky-300" style="animation-duration: 8s;"></i> 日本滑雪技術團隊 ＆ 冬季交通特急規劃
       </span>
-      <h1 id="trip-title" class="text-2xl md:text-4xl font-extrabold text-white mb-2">載入行程中...</h1>
-      <p id="flight-info" class="text-slate-400 text-xs md:text-sm"></p>
+      <h1 id="trip-title" class="text-2xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">載入行程中...</h1>
+      <p id="flight-info" class="text-slate-400 text-xs md:text-sm flex flex-wrap justify-center items-center gap-2 mt-2"></p>
     </div>
   </header>
 
   <!-- 志賀高原頂部即時氣溫與降雪預報模組 -->
   <section class="max-w-4xl mx-auto px-4 mt-6">
-    <div id="weather-card" class="bg-slate-900/90 rounded-2xl border border-sky-500/30 p-5 shadow-2xl backdrop-blur">
+    <div id="weather-card" class="glass-card rounded-2xl border border-sky-500/30 p-5 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-temperature-half text-sky-400 text-xl"></i>
-          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣溫與降雪預報</h3>
+          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣候與降雪預報</h3>
         </div>
-        <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800 font-mono flex items-center gap-1">
-          <span class="relative flex h-2 w-2 mr-1">
+        <button onclick="fetchShigaWeather()" class="text-[10px] md:text-xs bg-sky-950 hover:bg-sky-900 text-sky-300 px-3 py-1 rounded-full border border-sky-800 font-mono flex items-center gap-1.5 transition">
+          <span class="relative flex h-2 w-2">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
           </span>
-          Open-Meteo 即時連線
-        </span>
+          Open-Meteo 即時連線 <i class="fa-solid fa-rotate-right ml-1"></i>
+        </button>
       </div>
       
       <div id="weather-content" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
@@ -60,45 +61,45 @@
     });
 
     async function loadItinerary() {
-      var titleEl = document.getElementById("trip-title");
-      var flightEl = document.getElementById("flight-info");
-      var container = document.getElementById("itinerary-container");
+      const titleEl = document.getElementById("trip-title");
+      const flightEl = document.getElementById("flight-info");
+      const container = document.getElementById("itinerary-container");
 
       try {
-        var res = await fetch("itinerary.json?t=" + Date.now());
+        const res = await fetch("itinerary.json?t=" + Date.now());
         if (!res.ok) throw new Error("HTTP " + res.status);
-        var data = await res.json();
+        const data = await res.json();
 
         if (titleEl) titleEl.innerText = data.trip_title || "2026 日本滑雪行程";
         if (flightEl && data.flights) {
           flightEl.innerHTML = 
-            '<i class="fa-solid fa-plane-arrival text-emerald-400 mr-1"></i>去程：' + (data.flights.arrival || "") + 
-            ' &nbsp;|&nbsp; <i class="fa-solid fa-plane-departure text-rose-400 mr-1"></i>回程：' + (data.flights.departure || "");
+            '<span class="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800"><i class="fa-solid fa-plane-arrival text-emerald-400 mr-1.5"></i>去程：' + (data.flights.arrival || "未提供") + '</span>' +
+            '<span class="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800"><i class="fa-solid fa-plane-departure text-rose-400 mr-1.5"></i>回程：' + (data.flights.departure || "未提供") + '</span>';
         }
 
         if (!container) return;
         container.innerHTML = "";
 
         (data.days || []).forEach(function(day) {
-          var card = document.createElement("div");
-          card.className = "bg-slate-900/90 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
+          const card = document.createElement("div");
+          card.className = "glass-card rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
 
           // 1. 雪場與雪道圖直連顯示模組
-          var skiHtml = "";
+          let skiHtml = "";
           if (day.ski_resort) {
-            var fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg";
-            var imgSrc = day.ski_resort.map_img || fallbackImg;
+            const fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg";
+            const imgSrc = day.ski_resort.map_img || fallbackImg;
             
             skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30 space-y-3">' +
               '<div class="flex items-center justify-between flex-wrap gap-2">' +
                 '<h4 class="text-sky-400 font-bold text-sm md:text-base flex items-center gap-2">' +
                   '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景路線雪道圖' +
                 '</h4>' +
-                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1">' +
+                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition flex items-center gap-1 font-medium">' +
                   '官網資訊 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>' +
                 '</a>' +
               '</div>' +
-              '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "包含初級、中級、高級雪道與纜車路線統整。") + '</p>' +
+              '<p class="text-xs text-slate-300 leading-relaxed">' + (day.ski_resort.features || "包含初級、中級、高級雪道與纜車路線統整。") + '</p>' +
               '<div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-lg relative group">' +
                 '<img src="' + imgSrc + '" alt="' + day.ski_resort.name + ' 雪道圖" ' +
                      'onerror="this.onerror=null; this.src='' + fallbackImg + '';" ' +
@@ -108,11 +109,11 @@
           }
 
           // 2. 友人 12/15 先行抵達東京與最晚直達巴士/Late Check-in 飯店指引模組
-          var friendHtml = "";
+          let friendHtml = "";
           if (day.friend_transit) {
             friendHtml = '<div class="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl text-xs md:text-sm text-amber-200 shadow-md space-y-2">' +
-              '<div class="font-bold flex items-center gap-2 text-amber-300 text-base">' +
-                '<i class="fa-solid fa-bus text-amber-400"></i> ' + (day.friend_transit.title || "友人12/15先行到達東京與深夜接駁指引") +
+              '<div class="font-bold flex items-center gap-2 text-amber-300 text-base border-b border-amber-500/30 pb-2">' +
+                '<i class="fa-solid fa-bus text-amber-400"></i> ' + (day.friend_transit.title || "友人 12/15 先行到達東京與深夜接駁指引") +
               '</div>' +
               '<div class="space-y-1.5 text-slate-200 leading-relaxed">' +
                 '<div><strong class="text-amber-400">🚌 最晚直達巴士與機場接駁：</strong>' + (day.friend_transit.late_bus || "成田/羽田機場最晚東京站/新宿直達深夜巴士(Keisei Bus/Airport Limousine)，班次營運至深夜 23:30/01:00。") + '</div>' +
@@ -123,11 +124,11 @@
           }
 
           // 3. 市區與週邊推薦景點模組
-          var attractionsHtml = "";
+          let attractionsHtml = "";
           if (day.attractions && day.attractions.length > 0) {
-            var attItems = day.attractions.map(function(a) {
-              var locationTag = a.area ? '<span class="ml-1 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + a.area + '</span>' : '';
-              return '<li>・<a href="' + a.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + '</a>' + locationTag + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></li>';
+            const attItems = day.attractions.map(function(a) {
+              const locationTag = a.area ? '<span class="ml-1 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + a.area + '</span>' : '';
+              return '<li>・<a href="' + (a.map || '#') + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + '</a>' + locationTag + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></li>';
             }).join("");
             attractionsHtml = '<div class="bg-slate-950/50 p-3.5 rounded-xl border border-slate-800 text-xs">' +
               '<span class="font-bold text-indigo-400 block mb-1.5"><i class="fa-solid fa-compass mr-1"></i> 市區推薦景點與地標：</span>' +
@@ -136,21 +137,21 @@
           }
 
           // 4. 多樣化美食與美食地圖模組
-          var recHtml = "";
+          let recHtml = "";
           if (day.recommendations) {
-            var buildList = function(items, hoverColor) {
+            const buildList = function(items, hoverColor) {
               if (!items || !items.length) { return '<li class="text-slate-500">暫無相關店家推薦</li>'; }
               return items.map(function(item) {
-                var areaTag = item.area ? '<span class="ml-1.5 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + item.area + '</span>' : '';
-                return '<li>・<a href="' + item.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2 font-medium">' + item.name + '</a>' + areaTag + ' <i class="fa-solid fa-map-pin text-rose-400 text-[10px] ml-1"></i></li>';
+                const areaTag = item.area ? '<span class="ml-1.5 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + item.area + '</span>' : '';
+                return '<li>・<a href="' + (item.map || '#') + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2 font-medium">' + item.name + '</a>' + areaTag + ' <i class="fa-solid fa-map-pin text-rose-400 text-[10px] ml-1"></i></li>';
               }).join("");
             };
 
-            var restaurantList = day.recommendations.restaurant || [];
-            var izakayaList = day.recommendations.izakaya || day.recommendations.late_night || [];
-            var dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert || [];
-            var beverageList = day.recommendations.beverage || [];
-            var souvenirList = day.recommendations.souvenir || [];
+            const restaurantList = day.recommendations.restaurant || [];
+            const izakayaList = day.recommendations.izakaya || day.recommendations.late_night || [];
+            const dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert || [];
+            const beverageList = day.recommendations.beverage || [];
+            const souvenirList = day.recommendations.souvenir || [];
 
             recHtml = '<details class="group bg-slate-950/60 rounded-xl border border-slate-800 p-3.5 transition" open>' +
               '<summary class="flex justify-between items-center text-xs md:text-sm font-semibold text-slate-300 hover:text-white">' +
@@ -187,7 +188,7 @@
             '</details>';
           }
 
-          var stayContent = day.stay;
+          let stayContent = day.stay || "尚未規劃";
           if (day.stay_map) {
             stayContent = '<a href="' + day.stay_map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2 font-medium">' + day.stay + ' <i class="fa-solid fa-location-dot text-rose-400 text-[10px] ml-0.5"></i></a>';
           }
@@ -221,33 +222,33 @@
     }
 
     async function fetchShigaWeather() {
-      var weatherContainer = document.getElementById("weather-content");
+      const weatherContainer = document.getElementById("weather-content");
       // 志賀高原中心區域座標: 緯度 36.7025, 經度 138.5133
-      var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
+      const weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
       
-      var controller = new AbortController();
-      var timeoutId = setTimeout(function() { controller.abort(); }, 6000);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(function() { controller.abort(); }, 6000);
 
       try {
-        var res = await fetch(weatherUrl, { signal: controller.signal });
+        const res = await fetch(weatherUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (!res.ok) throw new Error("HTTP " + res.status);
-        var data = await res.json();
+        const data = await res.json();
         
-        var current = data.current;
-        var daily = data.daily;
+        const current = data.current;
+        const daily = data.daily;
         if (!current || !daily) {
           if (weatherContainer) weatherContainer.innerHTML = '<p class="col-span-full text-xs text-rose-400">無法解析氣象數據</p>';
           return;
         }
 
-        var currentTemp = current.temperature_2m;
-        var currentSnow = current.snowfall || 0;
-        var currentWind = current.wind_speed_10m;
-        var currentHumidity = current.relative_humidity_2m;
+        const currentTemp = current.temperature_2m;
+        const currentSnow = current.snowfall || 0;
+        const currentWind = current.wind_speed_10m;
+        const currentHumidity = current.relative_humidity_2m;
 
-        var html = '' +
+        let html = '' +
           '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center shadow-inner">' +
             '<span class="text-[11px] text-slate-400 mb-1"><i class="fa-solid fa-temperature-three-quarters mr-1 text-rose-400"></i>即時氣溫</span>' +
             '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
@@ -266,12 +267,12 @@
           '</div>';
 
         html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
-        for (var i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 3; i++) {
           if (daily.time && daily.time[i]) {
-            var dateStr = daily.time[i].substring(5);
-            var maxT = daily.temperature_2m_max[i];
-            var minT = daily.temperature_2m_min[i];
-            var snowSum = (daily.snowfall_sum && daily.snowfall_sum[i]) || 0;
+            const dateStr = daily.time[i].substring(5);
+            const maxT = daily.temperature_2m_max[i];
+            const minT = daily.temperature_2m_min[i];
+            const snowSum = (daily.snowfall_sum && daily.snowfall_sum[i]) || 0;
             html += '<div class="bg-slate-950/50 p-2.5 rounded-lg border border-slate-800/80 hover:border-sky-500/30 transition">' +
               '<div class="text-slate-400 font-mono mb-0.5 text-[11px]">' + dateStr + ' 預報</div>' +
               '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
