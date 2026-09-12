@@ -58,3 +58,66 @@ jobs:
           prompt = f"""
           你是一名資深全端工程師與 Python 架構師。
           以下是目前儲存庫運作中的 agent.py 完整代碼：
+          -------------------------------------
+          {old_code}
+          -------------------------------------
+
+          請依據使用者的新功能需求進行代碼升級：
+          【{upgrade_goal}】
+
+          代碼改寫規範：
+          1. 輸出包含所有必要模組（import）、更新後的前端 COMPLETE_INDEX_HTML 與完整業務邏輯的 agent.py。
+          2. 保持原有 Auth.Token、Gemini API 呼叫與 GitHub API 寫入結構正常運作。
+          3. 嚴禁任何開場白或額外文字，僅輸出純 Python 程式碼，絕對不要使用 ```python 語法標籤。
+          """
+
+          response = client.models.generate_content(
+              model="gemini-3.6-flash",
+              contents=prompt
+          )
+          new_code = response.text.strip().replace("```python", "").replace("```", "").strip()
+
+          # 3. 本地安全自檢：若有語法錯誤則拒絕開 PR
+          with open("agent_temp.py", "w", encoding="utf-8") as f:
+              f.write(new_code)
+          try:
+              py_compile.compile("agent_temp.py", doraise=True)
+              print("本機編譯通過，開始開立分支與 PR...")
+          except py_compile.PyCompileError as e:
+              raise RuntimeError(f"代碼語法檢驗不合格，中斷發布：{e}")
+
+          # 4. 建立新分支 (例如 feature/spark-upgrade-1726000000)
+          branch_name = f"feature/spark-upgrade-{int(time.time())}"
+          repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=main_sha)
+
+          # 5. 在新分支提交新版 agent.py
+          repo.update_file(
+              path="agent.py",
+              message=f"feat(agent): {upgrade_goal[:35]}",
+              content=new_code,
+              sha=old_file.sha,
+              branch=branch_name
+          )
+
+          # 6. 發起 Pull Request
+          pr_body = f"""## 🤖 Gemini Spark 自動功能升級提案
+
+          ### 升級目標
+          {upgrade_goal}
+
+          ### 安全驗證
+          - [x] 通過本機 `py_compile` 語法測試
+          - [x] 整合新版前端與後端資料邏輯
+          - [ ] 等待 CI 工作流檢驗 (Code Verification)
+
+          請檢視程式碼異動後，點選下方 **Merge pull request** 正式合併至 main 分支。
+          """
+
+          pr = repo.create_pull(
+              title=f"🚀 [Spark Upgrade] {upgrade_goal[:30]}",
+              body=pr_body,
+              head=branch_name,
+              base="main"
+          )
+          print(f"成功發起 PR！網址：{pr.html_url}")
+          EOF
