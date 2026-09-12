@@ -15,12 +15,33 @@
   <header class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-slate-800 py-8 px-4 text-center">
     <div class="max-w-4xl mx-auto">
       <span class="inline-block bg-blue-500/20 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 mb-2">
-        <i class="fa-solid fa-snowflake mr-1"></i> 日本滑雪技術團隊 ＆ 旅遊顧問規劃
+        <i class="fa-solid fa-snowflake mr-1"></i> 日本滑雪技術團隊 ＆ 冬季交通特急規劃
       </span>
       <h1 id="trip-title" class="text-2xl md:text-4xl font-extrabold text-white mb-2">載入行程中...</h1>
       <p id="flight-info" class="text-slate-400 text-xs md:text-sm"></p>
     </div>
   </header>
+
+  <!-- 志賀高原即時氣候與降雪預報模組 -->
+  <section class="max-w-4xl mx-auto px-4 mt-6">
+    <div id="weather-card" class="bg-slate-900/80 rounded-2xl border border-sky-500/30 p-5 shadow-xl backdrop-blur">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-cloud-sun-rain text-sky-400 text-lg"></i>
+          <h3 class="font-bold text-slate-100 text-sm md:text-base">志賀高原 (Shiga Kogen) 即時氣候與降雪預報</h3>
+        </div>
+        <span class="text-[10px] md:text-xs bg-sky-950 text-sky-300 px-2.5 py-1 rounded-full border border-sky-800">
+          <i class="fa-solid fa-sync fa-spin mr-1"></i>Open-Meteo 即時連線
+        </span>
+      </div>
+      
+      <div id="weather-content" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <div class="col-span-2 md:col-span-4 py-4 text-slate-400 text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>正在獲取志賀高原山區氣象數據...
+        </div>
+      </div>
+    </div>
+  </section>
 
   <main class="max-w-4xl mx-auto px-4 py-8 space-y-6" id="itinerary-container"></main>
 
@@ -29,6 +50,70 @@
   </footer>
 
   <script>
+    function fetchShigaWeather() {
+      var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=36.7025&longitude=138.5133&current=temperature_2m,relative_humidity_2m,weather_code,snowfall,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=Asia%2FTokyo";
+      
+      fetch(weatherUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var current = data.current;
+          var daily = data.daily;
+          var weatherContainer = document.getElementById("weather-content");
+          
+          if (!current || !daily) {
+            weatherContainer.innerHTML = '<p class="col-span-full text-xs text-rose-400">無法解析氣象數據</p>';
+            return;
+          }
+
+          var currentTemp = current.temperature_2m;
+          var currentSnow = current.snowfall || 0;
+          var currentWind = current.wind_speed_10m;
+
+          var html = '' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">即時氣溫</span>' +
+              '<span class="text-xl md:text-2xl font-black text-sky-400 font-mono">' + currentTemp + ' °C</span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">當前降雪量</span>' +
+              '<span class="text-xl md:text-2xl font-black text-cyan-300 font-mono">' + currentSnow + ' <span class="text-xs">cm/h</span></span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">山區陣風風速</span>' +
+              '<span class="text-xl md:text-2xl font-black text-indigo-300 font-mono">' + currentWind + ' <span class="text-xs">km/h</span></span>' +
+            '</div>' +
+            '<div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex flex-col justify-center items-center">' +
+              '<span class="text-xs text-slate-400 mb-1">預測累積降雪(今日)</span>' +
+              '<span class="text-xl md:text-2xl font-black text-blue-400 font-mono">' + (daily.snowfall_sum[0] || 0) + ' <span class="text-xs">cm</span></span>' +
+            '</div>';
+
+          html += '<div class="col-span-2 md:col-span-4 mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-xs">';
+          for (var i = 1; i <= 3; i++) {
+            if (daily.time[i]) {
+              var dateStr = daily.time[i].substring(5);
+              var maxT = daily.temperature_2m_max[i];
+              var minT = daily.temperature_2m_min[i];
+              var snowSum = daily.snowfall_sum[i] || 0;
+              html += '<div class="bg-slate-950/40 p-2 rounded-lg border border-slate-800/50">' +
+                '<div class="text-slate-400 font-mono mb-0.5">' + dateStr + '</div>' +
+                '<div class="text-slate-200 font-bold">' + minT + '°C ~ ' + maxT + '°C</div>' +
+                '<div class="text-sky-300 text-[11px]"><i class="fa-solid fa-snowflake mr-1"></i>降雪 ' + snowSum + ' cm</div>' +
+              '</div>';
+            }
+          }
+          html += '</div>';
+
+          weatherContainer.innerHTML = html;
+        })
+        .catch(function(err) {
+          console.error("氣象資料載入失敗:", err);
+          document.getElementById("weather-content").innerHTML = 
+            '<p class="col-span-full text-xs text-slate-500 py-2">氣象數據連線逾時，請刷新頁面重試。</p>';
+        });
+    }
+
+    fetchShigaWeather();
+
     fetch("itinerary.json?t=" + Date.now())
       .then(function(res) {
         if (!res.ok) { throw new Error("HTTP " + res.status); }
@@ -49,85 +134,105 @@
           var card = document.createElement("div");
           card.className = "bg-slate-900/90 rounded-2xl border border-slate-800 p-5 md:p-6 shadow-xl space-y-4";
 
+          // 1. 雪場與雪道圖直連顯示模組（附帶自動備用防破圖機制）
           var skiHtml = "";
           if (day.ski_resort) {
-            skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30">' +
-              '<div class="flex items-center justify-between mb-2">' +
+            var fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg/1280px-Shiga_Kogen_Yakebitaiyama_Ski_Area.jpg";
+            var imgSrc = day.ski_resort.map_img || fallbackImg;
+            
+            skiHtml = '<div class="bg-slate-950/80 p-4 rounded-xl border border-sky-500/30 space-y-3">' +
+              '<div class="flex items-center justify-between flex-wrap gap-2">' +
                 '<h4 class="text-sky-400 font-bold text-sm md:text-base flex items-center gap-2">' +
-                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name +
+                  '<i class="fa-solid fa-person-skiing"></i> ' + day.ski_resort.name + ' 全景路線雪道圖' +
                 '</h4>' +
-                '<a href="' + day.ski_resort.official_link + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
-                  '官網全景圖 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
+                '<a href="' + (day.ski_resort.official_link || "#") + '" target="_blank" rel="noopener noreferrer" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded transition">' +
+                  '官網資訊 <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>' +
                 '</a>' +
               '</div>' +
-              '<p class="text-xs text-slate-300 mb-3">' + (day.ski_resort.features || "") + '</p>' +
-              '<div class="rounded-lg overflow-hidden border border-slate-700">' +
-                '<img src="' + day.ski_resort.map_img + '" alt="' + day.ski_resort.name + ' 雪道圖" class="w-full h-auto object-cover hover:scale-105 transition duration-300">' +
+              '<p class="text-xs text-slate-300">' + (day.ski_resort.features || "包含初級、中級、高級雪道與纜車路線統整。") + '</p>' +
+              '<div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shadow-lg relative group">' +
+                '<img src="' + imgSrc + '" alt="' + day.ski_resort.name + ' 雪道圖" ' +
+                     'onerror="this.onerror=null; this.src='' + fallbackImg + '';" ' +
+                     'class="w-full h-auto object-contain max-h-[650px] hover:scale-[1.01] transition duration-300 bg-slate-950 block">' +
               '</div>' +
             '</div>';
           }
 
+          // 2. 友人 12/15 先行抵達東京與最晚直達巴士/Late Check-in 飯店指引模組
           var friendHtml = "";
           if (day.friend_transit) {
-            friendHtml = '<div class="bg-amber-950/30 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-200">' +
-              '<div class="font-bold flex items-center gap-2 mb-1 text-amber-400">' +
-                '<i class="fa-solid fa-user-clock"></i> ' + (day.friend_transit.title || "友人交通接駁") +
+            friendHtml = '<div class="bg-amber-950/40 border border-amber-500/40 p-4 rounded-xl text-xs md:text-sm text-amber-200 shadow-md space-y-2">' +
+              '<div class="font-bold flex items-center gap-2 text-amber-300 text-base">' +
+                '<i class="fa-solid fa-bus text-amber-400"></i> ' + (day.friend_transit.title || "友人12/15先行到達東京與深夜接駁指引") +
               '</div>' +
-              '<p>' + day.friend_transit.details + '</p>' +
+              '<div class="space-y-1.5 text-slate-200 leading-relaxed">' +
+                '<div><strong class="text-amber-400">🚌 最晚直達巴士與機場接駁：</strong>' + (day.friend_transit.late_bus || "成田/羽田機場最晚東京站/新宿直達深夜巴士(Keisei Bus/Airport Limousine)，班次營運至深夜 23:30/01:00。") + '</div>' +
+                '<div><strong class="text-amber-400">🔑 飯店最晚入住 (Late Check-in) 方案：</strong>' + (day.friend_transit.check_in_guide || "請提前向飯店備註晚到，若過 midnight 可使用自助 Check-in 機台或撥打門口 Emergency Call 密碼鎖進房。") + '</div>' +
+                (day.friend_transit.details ? '<div class="pt-1 text-slate-300 text-xs border-t border-amber-900/50">' + day.friend_transit.details + '</div>' : '') +
+              '</div>' +
             '</div>';
           }
 
+          // 3. 市區與週邊推薦景點模組
           var attractionsHtml = "";
           if (day.attractions && day.attractions.length > 0) {
             var attItems = day.attractions.map(function(a) {
-              return '<li>・<a href="' + a.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></a></li>';
+              var locationTag = a.area ? '<span class="ml-1 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + a.area + '</span>' : '';
+              return '<li>・<a href="' + a.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + a.name + '</a>' + locationTag + ' <i class="fa-solid fa-location-dot text-rose-500 ml-1 text-[10px]"></i></li>';
             }).join("");
-            attractionsHtml = '<div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800 text-xs">' +
-              '<span class="font-bold text-indigo-400 block mb-1.5"><i class="fa-solid fa-compass mr-1"></i> 市區推薦景點：</span>' +
-              '<ul class="space-y-1">' + attItems + '</ul>' +
+            attractionsHtml = '<div class="bg-slate-950/50 p-3.5 rounded-xl border border-slate-800 text-xs">' +
+              '<span class="font-bold text-indigo-400 block mb-1.5"><i class="fa-solid fa-compass mr-1"></i> 市區推薦景點與地標：</span>' +
+              '<ul class="space-y-1.5">' + attItems + '</ul>' +
             '</div>';
           }
 
+          // 4. 多樣化美食與美食地圖模組 (包含地點標示與 Google Maps 連結)
           var recHtml = "";
           if (day.recommendations) {
             var buildList = function(items, hoverColor) {
-              if (!items || !items.length) { return '<li class="text-slate-500">暫無推薦項目</li>'; }
+              if (!items || !items.length) { return '<li class="text-slate-500">暫無相關店家推薦</li>'; }
               return items.map(function(item) {
-                return '<li>・<a href="' + item.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2">' + item.name + ' <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i></a></li>';
+                var areaTag = item.area ? '<span class="ml-1.5 text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">📍 ' + item.area + '</span>' : '';
+                return '<li>・<a href="' + item.map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-' + hoverColor + '-300 underline underline-offset-2 font-medium">' + item.name + '</a>' + areaTag + ' <i class="fa-solid fa-map-pin text-rose-400 text-[10px] ml-1"></i></li>';
               }).join("");
             };
 
             var restaurantList = day.recommendations.restaurant || [];
-            var dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert_drink || [];
+            var izakayaList = day.recommendations.izakaya || day.recommendations.late_night || [];
+            var dessertList = day.recommendations.dessert_pastry || day.recommendations.dessert || [];
             var beverageList = day.recommendations.beverage || [];
             var souvenirList = day.recommendations.souvenir || [];
 
-            recHtml = '<details class="group bg-slate-950/60 rounded-xl border border-slate-800 p-3.5 transition">' +
+            recHtml = '<details class="group bg-slate-950/60 rounded-xl border border-slate-800 p-3.5 transition" open>' +
               '<summary class="flex justify-between items-center text-xs md:text-sm font-semibold text-slate-300 hover:text-white">' +
                 '<span class="flex items-center gap-2">' +
                   '<i class="fa-solid fa-utensils text-emerald-400"></i>' +
-                  '<span>點選查看在地推薦：私房餐廳・甜點糕點・飲品・伴手禮</span>' +
+                  '<span>嚴選飲食選擇與周邊美食地圖（正餐・宵夜居酒屋・甜點・伴手禮）</span>' +
                 '</span>' +
                 '<span class="text-slate-500 group-open:rotate-180 transition-transform duration-200">' +
                   '<i class="fa-solid fa-chevron-down"></i>' +
                 '</span>' +
               '</summary>' +
-              '<div class="pt-4 border-t border-slate-800 mt-3 space-y-3.5 text-xs">' +
+              '<div class="pt-4 border-t border-slate-800 mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">' +
                 '<div>' +
-                  '<span class="font-bold text-emerald-400 block mb-1">【正餐餐廳】</span>' +
-                  '<ul class="space-y-1">' + buildList(restaurantList, "emerald") + '</ul>' +
+                  '<span class="font-bold text-emerald-400 block mb-1.5"><i class="fa-solid fa-bowl-rice mr-1"></i>【正餐與特色餐廳】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(restaurantList, "emerald") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-amber-400 block mb-1">【甜點・特色糕點】</span>' +
-                  '<ul class="space-y-1">' + buildList(dessertList, "amber") + '</ul>' +
+                  '<span class="font-bold text-red-400 block mb-1.5"><i class="fa-solid fa-beer-mug-empty mr-1"></i>【宵夜・深夜居酒屋】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(izakayaList, "red") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-cyan-400 block mb-1">【特色飲品・地酒】</span>' +
-                  '<ul class="space-y-1">' + buildList(beverageList, "cyan") + '</ul>' +
+                  '<span class="font-bold text-amber-400 block mb-1.5"><i class="fa-solid fa-cake-candles mr-1"></i>【甜點・在地名物糕點】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(dessertList, "amber") + '</ul>' +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-bold text-fuchsia-400 block mb-1">【必買伴手禮】</span>' +
-                  '<ul class="space-y-1">' + buildList(souvenirList, "fuchsia") + '</ul>' +
+                  '<span class="font-bold text-cyan-400 block mb-1.5"><i class="fa-solid fa-wine-glass mr-1"></i>【在地地酒・特色飲品】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(beverageList, "cyan") + '</ul>' +
+                '</div>' +
+                '<div class="md:col-span-2">' +
+                  '<span class="font-bold text-fuchsia-400 block mb-1.5"><i class="fa-solid fa-gift mr-1"></i>【必買在地伴手禮與銘菓】</span>' +
+                  '<ul class="space-y-1.5">' + buildList(souvenirList, "fuchsia") + '</ul>' +
                 '</div>' +
               '</div>' +
             '</details>';
@@ -135,7 +240,7 @@
 
           var stayContent = day.stay;
           if (day.stay_map) {
-            stayContent = '<a href="' + day.stay_map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2">' + day.stay + ' <i class="fa-solid fa-location-dot text-rose-400 text-[10px] ml-0.5"></i></a>';
+            stayContent = '<a href="' + day.stay_map + '" target="_blank" rel="noopener noreferrer" class="text-slate-200 hover:text-indigo-300 underline underline-offset-2 font-medium">' + day.stay + ' <i class="fa-solid fa-location-dot text-rose-400 text-[10px] ml-0.5"></i></a>';
           }
 
           card.innerHTML = 
@@ -146,11 +251,11 @@
             '<div class="space-y-2 text-xs md:text-sm text-slate-300">' +
               '<div class="flex items-start gap-2">' +
                 '<i class="fa-solid fa-hotel text-indigo-400 mt-0.5"></i>' +
-                '<div><span class="text-slate-400">住宿：</span>' + stayContent + '</div>' +
+                '<div><span class="text-slate-400">住宿飯店：</span>' + stayContent + '</div>' +
               '</div>' +
               '<div class="flex items-start gap-2">' +
                 '<i class="fa-solid fa-train-subway text-emerald-400 mt-0.5"></i>' +
-                '<div><span class="text-slate-400">交通規劃：</span>' + day.transit + '</div>' +
+                '<div><span class="text-slate-400">冬季交通規劃 (北陸新幹線/特急/雪場巴士)：</span>' + day.transit + '</div>' +
               '</div>' +
             '</div>' +
             friendHtml +
