@@ -1,0 +1,60 @@
+name: Gemini Spark Auto PR Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      upgrade_goal:
+        description: '請描述希望 agent.py 新增或重構的功能'
+        required: true
+        default: '在網頁頂部加入志賀高原即時氣溫與降雪預報模組'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 簽出儲存庫代碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python 環境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安裝相依套件
+        run: pip install google-genai PyGithub
+
+      - name: 讓 Gemini 重構代碼並發起 PR
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          UPGRADE_GOAL: ${{ inputs.upgrade_goal }}
+        run: |
+          python - << 'EOF'
+          import os
+          import time
+          import json
+          import py_compile
+          from google import genai
+          from github import Github, Auth
+
+          gh_token = os.environ["GH_PAT"].strip()
+          repo_name = os.environ["GH_REPO"].strip()
+          gemini_key = os.environ["GEMINI_API_KEY"].strip()
+          upgrade_goal = os.environ["UPGRADE_GOAL"].strip()
+
+          # 1. 連線至 GitHub 取得 main 分支與現有 agent.py
+          auth = Auth.Token(gh_token)
+          gh = Github(auth=auth)
+          repo = gh.get_repo(repo_name)
+          main_ref = repo.get_git_ref("heads/main")
+          main_sha = main_ref.object.sha
+
+          old_file = repo.get_contents("agent.py", ref="main")
+          old_code = old_file.decoded_content.decode("utf-8")
+
+          # 2. 呼叫 Gemini 3.6 Flash 重新設計完整代碼
+          client = genai.Client(api_key=gemini_key)
+          prompt = f"""
+          你是一名資深全端工程師與 Python 架構師。
+          以下是目前儲存庫運作中的 agent.py 完整代碼：
